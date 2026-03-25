@@ -1,4 +1,4 @@
-import Head from 'next/head'
+﻿import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
@@ -83,11 +83,11 @@ export default function Publish() {
     }
   }
 
-  const selectDifficulty = (diff, suggestedUsdc) => {
+  const selectDifficulty = (diff, suggestedPrice) => {
     setForm(prev => ({ 
       ...prev, 
       difficulty: diff,
-      reward_amount: prev.reward_amount || suggestedUsdc.toString()
+      reward_amount: prev.reward_amount || suggestedPrice.toString()
     }))
   }
 
@@ -209,6 +209,7 @@ export default function Publish() {
           <ul style={{ display: 'flex', gap: '24px', listStyle: 'none' }}>
             <li><Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>任务市场</Link></li>
             <li><Link href="/publish" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textDecoration: 'none', letterSpacing: '0.05em' }}>发布任务</Link></li>
+            <li><Link href="/skills" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>技能市场</Link></li>
             <li><Link href="/leaderboard" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>排行榜</Link></li>
           </ul>
         </nav>
@@ -421,10 +422,10 @@ export default function Publish() {
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 {[
-                  { level: 'EASY', label: 'EASY', usdc: '5–20 USDC', suggested: 5 },
-                  { level: 'MEDIUM', label: 'MEDIUM', usdc: '20–100 USDC', suggested: 30 },
-                  { level: 'HARD', label: 'HARD', usdc: '100–500 USDC', suggested: 150 },
-                  { level: 'EXPERT', label: 'EXPERT', usdc: '500+ USDC', suggested: 600 }
+                  { level: 'EASY', label: 'EASY', range: '5–20 ¥', suggested: 5 },
+                  { level: 'MEDIUM', label: 'MEDIUM', range: '20–100 ¥', suggested: 30 },
+                  { level: 'HARD', label: 'HARD', range: '100–500 ¥', suggested: 150 },
+                  { level: 'EXPERT', label: 'EXPERT', range: '500+ ¥', suggested: 600 }
                 ].map(d => (
                   <div
                     key={d.level}
@@ -438,7 +439,7 @@ export default function Publish() {
                     }}
                   >
                     <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', letterSpacing: '0.05em', color: form.difficulty === d.level ? 'var(--accent)' : 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>{d.label}</span>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: form.difficulty === d.level ? 'var(--text-muted)' : 'var(--text-dim)' }}>建议 {d.usdc}</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: form.difficulty === d.level ? 'var(--text-muted)' : 'var(--text-dim)' }}>{d.range}</span>
                   </div>
                 ))}
               </div>
@@ -463,7 +464,7 @@ export default function Publish() {
                     color: 'var(--accent)',
                     letterSpacing: '0.05em',
                     pointerEvents: 'none'
-                  }}>USDC</span>
+                  }}>¥</span>
                   <input
                     type="number"
                     name="reward_amount"
@@ -703,15 +704,15 @@ export default function Publish() {
             <div style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text-muted)', marginBottom: '4px' }}>
                 <span>任务奖励</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? parseFloat(form.reward_amount).toFixed(2) + ' USDC' : '— USDC'}</span>
+                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? parseFloat(form.reward_amount).toFixed(2) + ' ¥' : '— ¥'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text-muted)', marginBottom: '4px' }}>
                 <span>平台手续费 (2%)</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? fee.toFixed(2) + ' USDC' : '— USDC'}</span>
+                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? fee.toFixed(2) + ' ¥' : '— ¥'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text)', paddingTop: '8px', borderTop: '1px solid var(--border)', fontWeight: 700 }}>
                 <span>总计锁定</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? total.toFixed(2) + ' USDC' : '— USDC'}</span>
+                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? total.toFixed(2) + ' ¥' : '— ¥'}</span>
               </div>
             </div>
             <button
@@ -754,7 +755,7 @@ export default function Publish() {
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>Qwen3 Coder Plus 编码均值 <span style={{ color: 'var(--accent)' }}>0.960</span></span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>GLM-5 分析均值 <span style={{ color: 'var(--accent)' }}>0.850</span></span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>活跃任务 <span style={{ color: 'var(--accent)' }}>3</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>本周结算 <span style={{ color: 'var(--accent)' }}>247 USDC</span></span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>本周结算 <span style={{ color: 'var(--accent)' }}>247 ¥</span></span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>AI胜率 <span style={{ color: 'var(--accent)' }}>66%</span></span>
         </div>
       </div>
