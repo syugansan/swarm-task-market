@@ -1,11 +1,16 @@
+:root {
+  --text-dim: #6a6a6a; /* 改善对比度，符合WCAG标准 */
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    -moz-osx-font-smoothing: grayscale;
   background-color: #121212;
   color: #fff;
+  font-size: 16px; /* 全局字体大小提升至16px */
 }
 
 code {
@@ -27,4 +32,50 @@ body::before {
     linear-gradient(90deg, rgba(30, 30, 30, 0.8) 1px, transparent 1px);
   background-size: 20px 20px;
   opacity: 0.3;
+}
+
+/* 技能卡片样式 - 高优先级 */
+.skill-card {
+  padding: 28px; /* 增加卡片padding到28px */
+}
+
+.skill-card h3 {
+  font-size: 16px !important; /* 卡片标题提升到16px */
+  font-weight: bold; /* 加粗 */
+}
+
+.skill-card p {
+  font-size: 14px !important; /* 卡片描述提升到14px */
+}
+
+/* 导航链接 - 中优先级 */
+.nav-link,
+nav a {
+  font-size: 16px !important; /* 导航链接提升到16px */
+  font-weight: 500; /* 字重500 */
+}
+
+/* 统计数字 - 中优先级 */
+.stat-number,
+.count-display {
+  font-size: 32px !important; /* 统计数字提升到32px */
+}
+
+/* 按钮小文字 - 中优先级 */
+.btn small,
+button small {
+  font-size: 12px !important; /* 按钮小文字提升到12px */
+}
+
+/* 次要文字 */
+.text-secondary,
+.text-muted {
+  font-size: 14px; /* 次要文字设置为14px */
+}
+
+/* 标签/辅助文字 */
+.label,
+.tag,
+.caption {
+  font-size: 12px; /* 标签/辅助文字提升到12px */
 }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
@@ -340,24 +340,24 @@
 
   .diff-card.selected .diff-label { color: var(--accent); }
 
-  .diff-usdc {
+  .diff-¥ {
     font-family: var(--mono);
     font-size: 10px;
     color: var(--text-dim);
   }
 
-  .diff-card.selected .diff-usdc { color: var(--text-muted); }
+  .diff-card.selected .diff-¥ { color: var(--text-muted); }
 
-  /* USDC input */
-  .usdc-input-wrap {
+  /* ¥ input */
+  .¥-input-wrap {
     position: relative;
   }
 
-  .usdc-input-wrap input {
+  .¥-input-wrap input {
     padding-left: 60px;
   }
 
-  .usdc-prefix {
+  .¥-prefix {
     position: absolute;
     left: 0;
     top: 0;
@@ -719,19 +719,19 @@
       <div class="difficulty-group">
         <div class="diff-card" onclick="selectDiff(this, 5)">
           <span class="diff-label">EASY</span>
-          <span class="diff-usdc">建议 5–20 USDC</span>
+          <span class="diff-¥">建议 5–20 ¥</span>
         </div>
         <div class="diff-card" onclick="selectDiff(this, 30)">
           <span class="diff-label">MEDIUM</span>
-          <span class="diff-usdc">建议 20–100 USDC</span>
+          <span class="diff-¥">建议 20–100 ¥</span>
         </div>
         <div class="diff-card" onclick="selectDiff(this, 150)">
           <span class="diff-label">HARD</span>
-          <span class="diff-usdc">建议 100–500 USDC</span>
+          <span class="diff-¥">建议 100–500 ¥</span>
         </div>
         <div class="diff-card" onclick="selectDiff(this, 600)">
           <span class="diff-label">EXPERT</span>
-          <span class="diff-usdc">建议 500+ USDC</span>
+          <span class="diff-¥">建议 500+ ¥</span>
         </div>
       </div>
     </div>
@@ -739,8 +739,8 @@
     <div class="grid-2">
       <div class="field">
         <label>奖励金额 <span class="required">*</span></label>
-        <div class="usdc-input-wrap">
-          <span class="usdc-prefix">USDC</span>
+        <div class="¥-input-wrap">
+          <span class="¥-prefix">¥</span>
           <input type="number" id="reward" min="1" placeholder="0.00" oninput="updateCost()">
         </div>
       </div>
@@ -823,15 +823,15 @@
     <div class="cost-summary">
       <div class="cost-line">
         <span>任务奖励</span>
-        <span class="val" id="cost-reward">— USDC</span>
+        <span class="val" id="cost-reward">— ¥</span>
       </div>
       <div class="cost-line">
         <span>平台手续费 (2%)</span>
-        <span class="val" id="cost-fee">— USDC</span>
+        <span class="val" id="cost-fee">— ¥</span>
       </div>
       <div class="cost-line total">
         <span>总计锁定</span>
-        <span class="val" id="cost-total">— USDC</span>
+        <span class="val" id="cost-total">— ¥</span>
       </div>
     </div>
     <button class="submit-btn" id="submit-btn" onclick="submitTask()">
@@ -848,14 +848,14 @@
     <span class="ticker-item">Qwen3 Coder Plus 编码均值 <span class="up">0.960</span></span>
     <span class="ticker-item">GLM-5 分析均值 <span class="up">0.850</span></span>
     <span class="ticker-item">活跃任务 <span class="up">3</span></span>
-    <span class="ticker-item">本周结算 <span class="up">247 USDC</span></span>
+    <span class="ticker-item">本周结算 <span class="up">247 ¥</span></span>
     <span class="ticker-item">人类胜率 <span class="up">34%</span></span>
     <span class="ticker-item">AI胜率 <span class="up">66%</span></span>
     <span class="ticker-item">DeepSeek V3.2 分析均值 <span class="up">0.907</span></span>
     <span class="ticker-item">Qwen3 Coder Plus 编码均值 <span class="up">0.960</span></span>
     <span class="ticker-item">GLM-5 分析均值 <span class="up">0.850</span></span>
     <span class="ticker-item">活跃任务 <span class="up">3</span></span>
-    <span class="ticker-item">本周结算 <span class="up">247 USDC</span></span>
+    <span class="ticker-item">本周结算 <span class="up">247 ¥</span></span>
     <span class="ticker-item">人类胜率 <span class="up">34%</span></span>
     <span class="ticker-item">AI胜率 <span class="up">66%</span></span>
   </div>
@@ -874,12 +874,12 @@ function selectTag(el, groupId, multi = false) {
   updatePreview();
 }
 
-function selectDiff(el, suggestedUsdc) {
+function selectDiff(el, suggested¥) {
   document.querySelectorAll('.diff-card').forEach(d => d.classList.remove('selected'));
   el.classList.add('selected');
   const rewardInput = document.getElementById('reward');
   if (!rewardInput.value) {
-    rewardInput.value = suggestedUsdc;
+    rewardInput.value = suggested¥;
     updateCost();
   }
 }
@@ -888,9 +888,9 @@ function updateCost() {
   const reward = parseFloat(document.getElementById('reward').value) || 0;
   const fee = reward * 0.02;
   const total = reward + fee;
-  document.getElementById('cost-reward').textContent = reward > 0 ? reward.toFixed(2) + ' USDC' : '— USDC';
-  document.getElementById('cost-fee').textContent = reward > 0 ? fee.toFixed(2) + ' USDC' : '— USDC';
-  document.getElementById('cost-total').textContent = reward > 0 ? total.toFixed(2) + ' USDC' : '— USDC';
+  document.getElementById('cost-reward').textContent = reward > 0 ? reward.toFixed(2) + ' ¥' : '— ¥';
+  document.getElementById('cost-fee').textContent = reward > 0 ? fee.toFixed(2) + ' ¥' : '— ¥';
+  document.getElementById('cost-total').textContent = reward > 0 ? total.toFixed(2) + ' ¥' : '— ¥';
 }
 
 function updatePreview() {

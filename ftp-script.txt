@@ -1,0 +1,42 @@
+open 47.250.121.223
+root
+password
+binary
+cd /var/www/swarmwork
+lcd D:\蜂群网站项目\蜂群任务市场\out
+put index.html
+put publish.html
+put leaderboard.html
+put 404.html
+mkdir tasks
+cd tasks
+put 1.html
+put 2.html
+put 3.html
+put 4.html
+put 5.html
+cd ..
+mkdir _next
+cd _next
+mkdir static
+cd static
+put -r *
+cd ..
+mkdir data
+cd data
+mkdir FKQcnFRhm81KxPIrojZhN
+cd FKQcnFRhm81KxPIrojZhN
+put index.json
+put leaderboard.json
+mkdir tasks
+cd tasks
+put 1.json
+put 2.json
+put 3.json
+put 4.json
+put 5.json
+cd ..
+cd ..
+cd ..
+dir
+quit

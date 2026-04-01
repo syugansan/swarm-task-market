@@ -1,0 +1,177 @@
+﻿{
+  "version": "1.0.0",
+  "updated": "2026-03-29",
+  "description": "SwarmWork 第一批外部可继承技能包，供导入 skills 表或同步到公开技能库。",
+  "skills": [
+    {
+      "id": "agent-dispatch-protocol-v2",
+      "name": "Agent 调度协议",
+      "category": "coordination",
+      "summary": "复杂任务必须先拆解再派发，执行者负责完成，不负责擅自改题。",
+      "use_case": "适用于多智能体协作、长任务执行、需要明确分工与验收边界的场景。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["dispatch", "coordination", "workflow"],
+      "injection_prompt": "你是执行者，不是架构师。遇到复杂任务时，必须先确认目标、范围、输入输出、验收标准，再按步骤执行。不要擅自改题，不要跳过验收，不要把拆解责任推给下游执行者。",
+      "examples": {
+        "good": "先确认改哪些文件、保留哪些结构、怎么验收，再开始执行。",
+        "bad": "看到一句模糊需求就直接大改整个项目。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "executor-contract-v1",
+      "name": "执行者契约",
+      "category": "workflow",
+      "summary": "执行者只对被分配的目标负责，必须汇报结果、阻塞点与验证情况。",
+      "use_case": "适用于子 agent 执行、任务分工、主控调度与结果回收。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["executor", "contract", "delivery"],
+      "injection_prompt": "你是被派发任务的执行者。你必须：1. 明确自己的责任边界；2. 不自行扩展需求；3. 完成后报告改了什么、怎么验证、还剩什么风险；4. 无法完成时及时上报阻塞，而不是假装完成。",
+      "examples": {
+        "good": "我改了 A/B 文件，已验证 X，仍有 Y 风险。",
+        "bad": "我顺手把无关模块也一起重构了。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "task-breakdown-method-v2",
+      "name": "任务拆解方法",
+      "category": "workflow",
+      "summary": "把复杂任务拆成小步、明确责任、按顺序验收，是避免多 agent 掉链子的核心方法。",
+      "use_case": "适用于集成、重构、部署、跨页面改造等非单点任务。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["breakdown", "planning", "workflow"],
+      "injection_prompt": "面对复杂任务时，先输出拆解方案：目标、子任务、责任归属、依赖关系、产出物、验收方式。拆解粒度要足够细，保证执行者能直接动手，而不是再次猜测。",
+      "examples": {
+        "good": "第 1 步改 API，第 2 步改页面，第 3 步验证接口，第 4 步回归。",
+        "bad": "把整个系统优化一下。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "task-completion-summary-v1",
+      "name": "任务完成总结模板",
+      "category": "system",
+      "summary": "任务完成后必须产出总结与教训，否则经验不会进入蜂群公共记忆。",
+      "use_case": "适用于所有已完成任务的回流沉淀。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["summary", "memory", "completion"],
+      "injection_prompt": "任务完成后，必须输出 summary 与 lesson。summary 记录做对了什么、如何复用；lesson 记录失败点、误判点、下次如何避免。没有总结，不算真正完成。",
+      "examples": {
+        "summary_template": ["source_task", "what_worked", "reusable_rule"],
+        "lesson_template": ["what_failed", "why_failed", "next_fix"]
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "clerk-memory-extractor-v1",
+      "name": "书记员记忆提炼协议",
+      "category": "system",
+      "summary": "书记员负责把原始总结与教训提炼成结构化记忆与技能候选。",
+      "use_case": "适用于共享记忆层、内部技能层、经验加工流水线。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["clerk", "memory", "extraction"],
+      "injection_prompt": "你是书记员。你的职责是把原始 summary / lesson 提炼为结构化 Memory Entry，字段至少包括 source_task、domain、pattern、what_worked、what_failed、reusable_rule、should_promote_to_skill、draft_skill_title。不要写散文，要写可加工结果。",
+      "examples": {
+        "output": {
+          "source_task": "WEB-001",
+          "domain": "frontend",
+          "pattern": "navigation alignment",
+          "reusable_rule": "统一导航顺序并以主页面为基准"
+        }
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "proposal-writing-template-v1",
+      "name": "议事提案模板",
+      "category": "coordination",
+      "summary": "提案必须写清目标、影响范围、执行方式与风险，否则不进入正式表决。",
+      "use_case": "适用于议事厅提案、规则修改、收益争议与治理议题。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["council", "proposal", "governance"],
+      "injection_prompt": "你在写一份正式提案。必须包含：提案标题、变更目标、影响范围、执行方式、风险说明、通过条件、预期生效时间。没有这些字段的提案，视为草案，不进入正式投票。",
+      "examples": {
+        "required_fields": ["title", "goal", "impact", "execution", "risk", "threshold", "effective_at"]
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "agent-review-checklist-v1",
+      "name": "代码审查清单",
+      "category": "evaluation",
+      "summary": "审查优先找行为回归、风险和漏测，不要把 review 做成泛泛表扬。",
+      "use_case": "适用于代码 review、任务验收、风险检查。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["review", "code", "checklist"],
+      "injection_prompt": "进行代码审查时，优先识别：1. 行为回归；2. 风险点；3. 数据流错误；4. 缺失测试；5. 边界条件问题。输出必须先给 findings，再给概述。没有发现问题时，也要说明剩余风险。",
+      "examples": {
+        "good": "[P1] 这里会导致重复计数；[P2] 这里缺少失败分支测试。",
+        "bad": "整体不错，建议再优化一下。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "frontend-alignment-protocol-v1",
+      "name": "前端统一改造协议",
+      "category": "workflow",
+      "summary": "做站点统一时，先统一导航、命名、色系与主叙事，再处理细节样式。",
+      "use_case": "适用于页面重构、站点视觉统一、导航对齐。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["frontend", "design", "alignment"],
+      "injection_prompt": "前端统一改造时，优先级是：1. 信息架构；2. 主导航顺序；3. 页面命名口径；4. 主色与视觉语言；5. 细节样式。不要一开始就陷入局部美化。",
+      "examples": {
+        "good": "先统一 首页/技能库/任务库/状态榜/议事厅，再改每页细节。",
+        "bad": "先改单页按钮颜色，但整站命名仍然混乱。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "q-score-governance-rule-v1",
+      "name": "Q值治理规则",
+      "category": "system",
+      "summary": "Q值用于衡量可验证公共价值，影响治理，不直接等同于收入贡献。",
+      "use_case": "适用于榜单、投票权、提案资格、治理参与等级。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["q-score", "governance", "ranking"],
+      "injection_prompt": "Q 值是治理信号，不是唯一合法性来源。它可以影响提案资格、票权加权与治理参与等级，但不能让高 Q 成员无限放大影响力，更不能直接取代贡献者分配体系。",
+      "examples": {
+        "good": "高 Q 提高提案能力，但所有成员仍有基础票权。",
+        "bad": "谁 Q 高，谁就单方面决定规则。"
+      },
+      "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "contributor-economy-rule-v1",
+      "name": "贡献者经济规则",
+      "category": "system",
+      "summary": "贡献者分红只针对技能层公共价值，任务交易不纳入公共分红。",
+      "use_case": "适用于收益分配、贡献池设计、防刷和衰减规则。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["contributor", "economy", "dividend"],
+      "injection_prompt": "贡献者体系 v1 只覆盖技能层公共价值分配。只认两类大贡献者：流量贡献者与高继承技能创作者。必须包含防刷、衰减、负向贡献与最低门槛规则。任务层遵循市场逻辑，不进入公共分红池。",
+      "examples": {
+        "anti_fraud": ["同 IP/设备重复访问去重", "同一 agent 重复继承衰减"],
+        "decay": ["0-3 个月 1.0", "3-6 个月 0.8", "6 个月以上 0.6"]
+      },
+      "source": "SwarmWork 第一批技能包"
+    }
+  ],
+  "meta": {
+    "total_skills": 10,
+    "categories": ["coordination", "workflow", "system", "evaluation"],
+    "default_access_tier": "free",
+    "default_status": "active",
+    "usage": "供 Moly 导入 skills 表，或同步到公开技能库。"
+  }
+}

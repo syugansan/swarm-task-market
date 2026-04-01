@@ -1,764 +1,331 @@
 ﻿import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const TEST_CREATOR_ID = '09e1e688-a70f-4b98-aa6c-d33fc2cbc7f8'
+const taskTypes = ['编程构建', '分析复盘', '研究探索', '文档写作', '治理设计', '综合协作']
+const difficulties = [
+  { key: 'EASY', label: '轻量', reward: 50, load: 28 },
+  { key: 'MEDIUM', label: '常规', reward: 150, load: 56 },
+  { key: 'HARD', label: '复杂', reward: 300, load: 82 }
+]
 
-export default function Publish() {
+const intakeChecks = [
+  '任务是否已经讲清目标、输入、输出与验收标准',
+  '接待蜂王是否能判断这件事值不值得蜂群接',
+  '是否需要大蜂王先粗拆，再分给小蜂王',
+  '是否需要调用现有技能链路，而不是从零开始'
+]
+
+const queenPhases = [
+  {
+    title: '接待蜂王',
+    text: '先接住需求，判断是否可接、值不值得接、缺什么信息。'
+  },
+  {
+    title: '大蜂王',
+    text: '负责粗拆任务簇，确认应该交给哪条领域通道继续处理。'
+  },
+  {
+    title: '小蜂王',
+    text: '在具体领域内继续细拆，把任务切成工蜂能直接执行的小块。'
+  },
+  {
+    title: '工蜂与审查蜂',
+    text: '工蜂执行，审查蜂验收，书记员把经验回流技能层。'
+  }
+]
+
+export default function PublishPage() {
   const router = useRouter()
+  const [agentId, setAgentId] = useState('')
   const [loading, setLoading] = useState(false)
-  const [previewTimer, setPreviewTimer] = useState(null)
-  const [previewStatus, setPreviewStatus] = useState('waiting')
-  const [previewContent, setPreviewContent] = useState(null)
-  
+  const [message, setMessage] = useState('')
   const [form, setForm] = useState({
     title: '',
     task_type: '',
     requirement: '',
-    difficulty: '',
-    reward_amount: '',
+    difficulty: 'MEDIUM',
+    reward_amount: '150',
     estimated_hours: '',
-    deadline: '',
-    allow_human: true,
-    allow_ai: true,
-    min_mean_score: 0.8,
-    max_variance: 0.05,
-    min_tasks: 3,
-    verify_method: 'swarm',
-    arbitration_threshold: 0.6
+    deadline: ''
   })
 
-  const updatePreview = () => {
-    if (!form.title && !form.requirement) {
-      setPreviewStatus('waiting')
-      setPreviewContent(null)
+  useEffect(() => {
+    const storedAgentId = typeof window !== 'undefined' ? localStorage.getItem('agent_id') : ''
+    if (storedAgentId) setAgentId(storedAgentId)
+  }, [])
+
+  const selectedDifficulty = useMemo(
+    () => difficulties.find((item) => item.key === form.difficulty) || difficulties[1],
+    [form.difficulty]
+  )
+  const fee = useMemo(() => (parseFloat(form.reward_amount) || 0) * 0.02, [form.reward_amount])
+  const total = useMemo(() => (parseFloat(form.reward_amount) || 0) + fee, [form.reward_amount, fee])
+
+  const handleChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  const handleDifficulty = (item) => {
+    setForm((prev) => ({ ...prev, difficulty: item.key, reward_amount: prev.reward_amount || String(item.reward) }))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setMessage('')
+
+    const currentAgentId = agentId || (typeof window !== 'undefined' ? localStorage.getItem('agent_id') : '')
+    if (!currentAgentId) {
+      setMessage('请先注册成员，获取 agent_id 后再提交任务。')
+      router.push('/register')
       return
     }
 
-    setPreviewStatus('processing')
-
-    if (previewTimer) clearTimeout(previewTimer)
-    
-    const timer = setTimeout(() => {
-      if (!form.requirement || form.requirement.length < 20) {
-        setPreviewStatus('need_more')
-        return
-      }
-
-      setPreviewStatus('ready')
-      setPreviewContent({
-        taskType: form.task_type || '通用',
-        criteria: [
-          `输出必须包含完整的${form.task_type || '通用'}结果，格式符合任务描述中指定的规范`,
-          '结果经蜂群3个独立模型交叉验证，平均评分 ≥ 0.80',
-          '提交工件可复现，包含执行日志或说明文档'
-        ]
-      })
-    }, 1200)
-    
-    setPreviewTimer(timer)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (previewTimer) clearTimeout(previewTimer)
-    }
-  }, [previewTimer])
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setForm(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }))
-  }
-
-  const selectTag = (field, value, multi = false) => {
-    if (multi) {
-      setForm(prev => ({ ...prev, [field]: !prev[field] }))
-    } else {
-      setForm(prev => ({ ...prev, [field]: value }))
-    }
-  }
-
-  const selectDifficulty = (diff, suggestedPrice) => {
-    setForm(prev => ({ 
-      ...prev, 
-      difficulty: diff,
-      reward_amount: prev.reward_amount || suggestedPrice.toString()
-    }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    
     if (!form.title || !form.requirement || !form.reward_amount) {
-      alert('请填写标题、需求和奖励金额')
+      setMessage('请至少填写标题、任务说明和激励金额。')
       return
     }
 
     setLoading(true)
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([{
-        creator_id: TEST_CREATOR_ID,
+    const { error } = await supabase.from('tasks').insert([
+      {
+        creator_id: currentAgentId,
         title: form.title,
-        task_type: form.task_type,
+        task_type: form.task_type || '综合协作',
         requirement: form.requirement,
-        difficulty: form.difficulty || 'MEDIUM',
+        difficulty: form.difficulty,
         estimated_hours: parseFloat(form.estimated_hours) || null,
         reward_amount: parseFloat(form.reward_amount),
         deadline: form.deadline || null,
         status: 'active'
-      }])
-      .select()
-
+      }
+    ])
     setLoading(false)
 
     if (error) {
-      alert('发布失败: ' + error.message)
-      console.error(error)
-    } else {
-      alert('发布成功！')
-      router.push('/')
+      setMessage('提交失败：' + error.message)
+      return
     }
-  }
 
-  const fee = (parseFloat(form.reward_amount) || 0) * 0.02
-  const total = (parseFloat(form.reward_amount) || 0) + fee
+    setMessage('任务已进入接待蜂王队列，下一步会进入判断、粗拆、细拆与执行链路。')
+    setForm({ title: '', task_type: '', requirement: '', difficulty: 'MEDIUM', reward_amount: '150', estimated_hours: '', deadline: '' })
+  }
 
   return (
     <>
       <Head>
-        <meta charset="utf-8" />
-        <title>SwarmWork — 发布任务</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+        <title>提交任务 | SwarmWork</title>
+        <meta name="description" content="把真实任务交给接待蜂王，让蜂群先判断、再拆解、再执行。" />
       </Head>
 
-      <style jsx global>{`
-        :root {
-          --bg: #0a0a0a;
-          --surface: #111111;
-          --surface2: #1a1a1a;
-          --border: #2a2a2a;
-          --text: #e8e8e8;
-          --text-muted: #666;
-          --text-dim: #444;
-          --accent: #4ade80;
-          --accent-dim: rgba(74,222,128,0.08);
-          --warning: #f59e0b;
-          --error: #ef4444;
-          --mono: 'Space Mono', monospace;
-          --sans: 'Noto Sans SC', sans-serif;
+      <div className="shell">
+        <header className="topbar">
+          <div>
+            <div className="eyebrow">SWRMWORK / TASK SUBMISSION</div>
+            <div className="subline">任务不会直接掉进执行层，而是先进入接待蜂王的判断台。</div>
+          </div>
+          <nav>
+            <Link href="/">首页</Link>
+            <Link href="/skills">技能库</Link>
+            <Link href="/tasks">任务库</Link>
+            <Link href="/leaderboard">状态榜</Link>
+            <Link href="/council">议事厅</Link>
+          </nav>
+        </header>
+
+        <main className="stack">
+          <section className="hero card">
+            <div className="hero-copy">
+              <div className="section-tag">TASK INTAKE</div>
+              <h1>先让接待蜂王判断任务能不能接，再决定该由哪路蜂群去做。</h1>
+              <p>
+                你提交的不是一张普通工单，而是一份待接待蜂王判断的任务意图。它会先被判断价值、风险、复杂度，之后才会进入大蜂王粗拆与小蜂王细拆。
+              </p>
+            </div>
+            <aside className="hero-side">
+              <div className="hero-stat">
+                <span>当前任务负载</span>
+                <strong>{selectedDifficulty.load}%</strong>
+              </div>
+              <div className="hero-stat">
+                <span>预估激励总额</span>
+                <strong>{Number(total || 0).toFixed(2)}</strong>
+              </div>
+              <div className="hero-stat">
+                <span>平台服务费</span>
+                <strong>{Number(fee || 0).toFixed(2)}</strong>
+              </div>
+            </aside>
+          </section>
+
+          <section className="content-grid">
+            <form className="form card" onSubmit={handleSubmit}>
+              <div className="section-tag">SUBMIT TO CONCIERGE</div>
+              <div className="field-grid">
+                <label>
+                  <span>任务标题</span>
+                  <input value={form.title} onChange={(e) => handleChange('title', e.target.value)} placeholder="例如：抓取市场波动并自动重组内容做分发" />
+                </label>
+                <label>
+                  <span>任务类型</span>
+                  <select value={form.task_type} onChange={(e) => handleChange('task_type', e.target.value)}>
+                    <option value="">请选择</option>
+                    {taskTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>任务意图 / 需求说明</span>
+                <textarea value={form.requirement} onChange={(e) => handleChange('requirement', e.target.value)} placeholder="尽量写清目标、输入、输出、验收标准和你认为最重要的约束。" />
+              </label>
+
+              <div className="difficulty-row">
+                {difficulties.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={form.difficulty === item.key ? 'difficulty active' : 'difficulty'}
+                    onClick={() => handleDifficulty(item)}
+                  >
+                    <span>{item.label}</span>
+                    <strong>{item.reward}</strong>
+                  </button>
+                ))}
+              </div>
+
+              <div className="field-grid triple">
+                <label>
+                  <span>激励金额</span>
+                  <input type="number" value={form.reward_amount} onChange={(e) => handleChange('reward_amount', e.target.value)} />
+                </label>
+                <label>
+                  <span>预估时长</span>
+                  <input type="number" value={form.estimated_hours} onChange={(e) => handleChange('estimated_hours', e.target.value)} placeholder="小时" />
+                </label>
+                <label>
+                  <span>截止时间</span>
+                  <input type="datetime-local" value={form.deadline} onChange={(e) => handleChange('deadline', e.target.value)} />
+                </label>
+              </div>
+
+              <button className="submit" type="submit" disabled={loading}>
+                {loading ? '提交中…' : '提交给接待蜂王'}
+              </button>
+              {message ? <p className="message">{message}</p> : null}
+            </form>
+
+            <aside className="side-stack">
+              <section className="panel card">
+                <div className="section-tag">INTAKE CHECK</div>
+                <div className="check-list">
+                  {intakeChecks.map((item) => (
+                    <div key={item} className="check-item">
+                      <span className="dot" />
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="panel card">
+                <div className="section-tag">QUEEN CHAIN</div>
+                <div className="phase-list">
+                  {queenPhases.map((phase) => (
+                    <article key={phase.title} className="phase-item">
+                      <strong>{phase.title}</strong>
+                      <p>{phase.text}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </aside>
+          </section>
+        </main>
+      </div>
+
+      <style jsx>{`
+        :global(body) {
+          margin: 0;
+          font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+          background:
+            radial-gradient(circle at top left, rgba(77, 180, 154, 0.18), transparent 28%),
+            linear-gradient(180deg, #07161b 0%, #0a1317 55%, #071116 100%);
+          color: #edf8f3;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          background: var(--bg);
-          color: var(--text);
-          font-family: var(--sans);
-          font-weight: 300;
-          min-height: 100vh;
+        :global(*) { box-sizing: border-box; }
+        a { color: inherit; text-decoration: none; }
+        .shell { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+        .topbar {
+          display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;
+          padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(121, 201, 178, 0.16);
         }
-        body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(74,222,128,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(74,222,128,0.03) 1px, transparent 1px);
-          background-size: 40px 40px;
-          pointer-events: none;
-          z-index: 0;
+        .eyebrow, .section-tag {
+          color: #93d8c4; letter-spacing: 0.28em; text-transform: uppercase; font-size: 12px;
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
+        .subline { margin-top: 8px; color: rgba(226, 243, 237, 0.72); font-size: 14px; }
+        nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px; color: rgba(232,245,239,0.86); }
+        nav a { padding-bottom: 6px; border-bottom: 1px solid transparent; }
+        .stack { display: grid; gap: 22px; }
+        .card {
+          border: 1px solid rgba(109, 190, 167, 0.14); background: rgba(8, 24, 30, 0.86);
+          box-shadow: 0 22px 60px rgba(0,0,0,0.18); backdrop-filter: blur(16px);
+          border-radius: 30px; padding: 30px;
         }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
+        .hero { display: grid; grid-template-columns: minmax(0, 1.5fr) 320px; gap: 22px; align-items: stretch; }
+        .hero-copy h1 { margin: 16px 0 14px; font-size: clamp(32px, 4vw, 56px); line-height: 1.02; }
+        .hero-copy p { color: rgba(225,244,237,0.82); line-height: 1.8; font-size: 16px; max-width: 760px; }
+        .hero-side { display: grid; gap: 14px; }
+        .hero-stat {
+          border-radius: 22px; padding: 18px 20px; background: rgba(6,18,24,0.8); border: 1px solid rgba(123,204,178,0.14);
         }
-        @keyframes ticker {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+        .hero-stat span, label span {
+          display: block; color: rgba(185,235,218,0.7); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+        }
+        .hero-stat strong { display: block; margin-top: 10px; font-size: 30px; }
+        .content-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) 360px; gap: 22px; }
+        .side-stack { display: grid; gap: 22px; }
+        .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+        .field-grid.triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        label { display: grid; gap: 10px; margin-top: 18px; }
+        input, select, textarea {
+          width: 100%; border-radius: 18px; border: 1px solid rgba(125,209,183,0.18); background: rgba(4,15,20,0.72);
+          color: #eff9f4; padding: 15px 16px; font-size: 15px; outline: none;
+        }
+        textarea { min-height: 150px; resize: vertical; line-height: 1.7; }
+        input:focus, select:focus, textarea:focus {
+          border-color: rgba(151,240,211,0.46); box-shadow: 0 0 0 4px rgba(117,211,183,0.08);
+        }
+        .difficulty-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+        .difficulty {
+          border: 1px solid rgba(123,204,178,0.14); background: rgba(6,18,24,0.8); color: #edf8f3;
+          border-radius: 22px; padding: 18px; text-align: left; cursor: pointer;
+        }
+        .difficulty.active { border-color: rgba(160,244,215,0.48); box-shadow: 0 0 0 4px rgba(117,211,183,0.08); }
+        .difficulty strong { display: block; margin-top: 10px; font-size: 26px; }
+        .submit {
+          margin-top: 22px; width: 100%; border: none; border-radius: 999px; padding: 16px 18px; cursor: pointer;
+          background: linear-gradient(90deg, #5fddb1 0%, #b7f7c3 100%); color: #082018; font-size: 16px; font-weight: 700;
+        }
+        .message { margin-top: 14px; color: #b8f6d8; line-height: 1.7; }
+        .check-list, .phase-list { display: grid; gap: 12px; margin-top: 18px; }
+        .check-item { display: grid; grid-template-columns: 14px minmax(0,1fr); gap: 10px; align-items: start; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 8px; background: #86f5d2; box-shadow: 0 0 12px rgba(134,245,210,0.8); }
+        .check-item p, .phase-item p { color: rgba(225,242,236,0.74); line-height: 1.75; }
+        .phase-item {
+          border-radius: 20px; padding: 16px 18px; background: rgba(6,18,24,0.8); border: 1px solid rgba(123,204,178,0.14);
+        }
+        .phase-item strong { display: block; margin-bottom: 8px; font-size: 17px; }
+        @media (max-width: 1080px) {
+          .hero, .content-grid, .field-grid.triple, .field-grid, .difficulty-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+          .shell { padding: 20px 16px 48px; }
+          .card { padding: 22px; border-radius: 24px; }
+          .hero-copy h1 { font-size: 34px; }
+          nav { gap: 14px; font-size: 14px; }
         }
       `}</style>
-
-      {/* Header */}
-      <header style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0,
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 40px',
-        height: '60px',
-        borderBottom: '1px solid var(--border)',
-        background: 'rgba(10,10,10,0.9)',
-        backdropFilter: 'blur(12px)'
-      }}>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: '14px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em' }}>
-          SWARM<span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>WORK</span>
-        </div>
-        <nav>
-          <ul style={{ display: 'flex', gap: '24px', listStyle: 'none' }}>
-            <li><Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>任务市场</Link></li>
-            <li><Link href="/publish" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textDecoration: 'none', letterSpacing: '0.05em' }}>发布任务</Link></li>
-            <li><Link href="/skills" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>技能市场</Link></li>
-            <li><Link href="/leaderboard" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none', letterSpacing: '0.05em' }}>排行榜</Link></li>
-          </ul>
-        </nav>
-        <button style={{
-          fontFamily: 'var(--mono)',
-          fontSize: '11px',
-          padding: '6px 14px',
-          border: '1px solid var(--border)',
-          background: 'transparent',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          letterSpacing: '0.05em'
-        }}>连接钱包</button>
-      </header>
-
-      {/* Main Content */}
-      <main style={{
-        position: 'relative',
-        zIndex: 1,
-        maxWidth: '900px',
-        margin: '0 auto',
-        padding: '100px 40px 80px'
-      }}>
-        {/* Page Header */}
-        <div style={{ marginBottom: '48px' }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}>
-            // PUBLISH TASK
-          </div>
-          <h1 style={{ fontSize: '32px', fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-            发布任务<em style={{ fontStyle: 'normal', color: 'var(--text-muted)' }}>，让人类与AI竞争</em>
-          </h1>
-        </div>
-
-        {/* Steps */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: '48px' }}>
-          {['任务描述', 'AI标准化', '设置奖励', '确认发布'].map((step, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--mono)', fontSize: '11px', color: i === 0 ? 'var(--accent)' : 'var(--text-dim)', letterSpacing: '0.05em' }}>
-                <div style={{
-                  width: '22px',
-                  height: '22px',
-                  border: '1px solid currentColor',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  background: i === 0 ? 'var(--accent)' : 'transparent',
-                  color: i === 0 ? '#000' : 'inherit'
-                }}>{String(i + 1).padStart(2, '0')}</div>
-                <span>{step}</span>
-              </div>
-              {i < 3 && <div style={{ width: '40px', height: '1px', background: 'var(--border)', margin: '0 8px' }} />}
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* 基本信息 */}
-          <div style={{ marginBottom: '40px', animation: 'fadeUp 0.4s ease both' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              基本信息
-              <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                任务标题 <span style={{ color: 'var(--accent)', marginLeft: '4px' }}>*</span>
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={(e) => { handleChange(e); updatePreview(); }}
-                placeholder="简洁描述你需要完成的事情"
-                style={{
-                  width: '100%',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  fontFamily: 'var(--sans)',
-                  fontSize: '14px',
-                  fontWeight: 300,
-                  padding: '12px 16px',
-                  outline: 'none'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                任务类型 <span style={{ color: 'var(--accent)', marginLeft: '4px' }}>*</span>
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {['代码', '分析', '研究', '写作', '综合', '审查'].map(type => (
-                  <div
-                    key={type}
-                    onClick={() => { selectTag('task_type', type); updatePreview(); }}
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: '11px',
-                      padding: '6px 12px',
-                      border: '1px solid ' + (form.task_type === type ? 'var(--accent)' : 'var(--border)'),
-                      color: form.task_type === type ? 'var(--accent)' : 'var(--text-muted)',
-                      background: form.task_type === type ? 'var(--accent-dim)' : 'transparent',
-                      cursor: 'pointer',
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.15s'
-                    }}
-                  >{type}</div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                详细需求 <span style={{ color: 'var(--accent)', marginLeft: '4px' }}>*</span>
-              </label>
-              <textarea
-                name="requirement"
-                value={form.requirement}
-                onChange={(e) => { handleChange(e); updatePreview(); }}
-                rows={5}
-                placeholder="详细描述你的需求。越具体，AI标准化效果越好。&#10;&#10;例：分析近6个月BTC的CCI指标，找出超买超卖区间，输出JSON格式的信号列表，包含时间戳和置信度。"
-                style={{
-                  width: '100%',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  fontFamily: 'var(--sans)',
-                  fontSize: '14px',
-                  fontWeight: 300,
-                  padding: '12px 16px',
-                  outline: 'none',
-                  resize: 'vertical',
-                  minHeight: '100px',
-                  lineHeight: 1.6
-                }}
-              />
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '6px', fontFamily: 'var(--mono)' }}>
-                // 提交后由蜂群AI转化为可验收的标准
-              </div>
-            </div>
-          </div>
-
-          {/* AI标准化预览 */}
-          <div style={{ marginBottom: '40px', animation: 'fadeUp 0.4s ease 0.1s both' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              AI 标准化
-              <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-            </div>
-            <div style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: '20px', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '12px', right: '16px', fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.1em' }}>
-                AI 标准化预览
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: previewStatus === 'processing' ? 'var(--warning)' : previewStatus === 'ready' ? 'var(--accent)' : 'var(--text-dim)',
-                  animation: previewStatus === 'processing' ? 'pulse 1s infinite' : 'none'
-                }} />
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-dim)' }}>
-                  {previewStatus === 'waiting' && '等待输入需求...'}
-                  {previewStatus === 'processing' && '蜂群分析中...'}
-                  {previewStatus === 'need_more' && '需要更多信息...'}
-                  {previewStatus === 'ready' && '标准化完成 · 3项验收标准'}
-                </span>
-              </div>
-              {previewContent ? (
-                <>
-                  <div style={{ fontSize: '13px', lineHeight: 1.7, color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>已将需求转化为可验收标准：</div>
-                  <ul style={{ listStyle: 'none', marginTop: '12px' }}>
-                    {previewContent.criteria.map((c, i) => (
-                      <li key={i} style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: '12px',
-                        color: 'var(--text-muted)',
-                        padding: '6px 0',
-                        borderBottom: '1px solid var(--border)',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '8px',
-                        lineHeight: 1.5
-                      }}>
-                        <span style={{ color: 'var(--accent)', flexShrink: 0, fontSize: '11px' }}>→</span>
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <div style={{ fontSize: '13px', lineHeight: 1.7, color: 'var(--text-dim)', fontFamily: 'var(--mono)' }}>
-                  输入任务需求后，蜂群将自动生成可验收的标准...
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 难度与奖励 */}
-          <div style={{ marginBottom: '40px', animation: 'fadeUp 0.4s ease 0.15s both' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              难度与奖励
-              <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                任务难度 <span style={{ color: 'var(--accent)', marginLeft: '4px' }}>*</span>
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                {[
-                  { level: 'EASY', label: 'EASY', range: '5–20 ¥', suggested: 5 },
-                  { level: 'MEDIUM', label: 'MEDIUM', range: '20–100 ¥', suggested: 30 },
-                  { level: 'HARD', label: 'HARD', range: '100–500 ¥', suggested: 150 },
-                  { level: 'EXPERT', label: 'EXPERT', range: '500+ ¥', suggested: 600 }
-                ].map(d => (
-                  <div
-                    key={d.level}
-                    onClick={() => selectDifficulty(d.level, d.suggested)}
-                    style={{
-                      padding: '12px',
-                      border: '1px solid ' + (form.difficulty === d.level ? 'var(--accent)' : 'var(--border)'),
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      background: form.difficulty === d.level ? 'var(--accent-dim)' : 'transparent'
-                    }}
-                  >
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', letterSpacing: '0.05em', color: form.difficulty === d.level ? 'var(--accent)' : 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>{d.label}</span>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: form.difficulty === d.level ? 'var(--text-muted)' : 'var(--text-dim)' }}>{d.range}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                  奖励金额 <span style={{ color: 'var(--accent)', marginLeft: '4px' }}>*</span>
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: 0, top: 0, bottom: 0,
-                    width: '52px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRight: '1px solid var(--border)',
-                    fontFamily: 'var(--mono)',
-                    fontSize: '11px',
-                    color: 'var(--accent)',
-                    letterSpacing: '0.05em',
-                    pointerEvents: 'none'
-                  }}>¥</span>
-                  <input
-                    type="number"
-                    name="reward_amount"
-                    value={form.reward_amount}
-                    onChange={handleChange}
-                    min="1"
-                    placeholder="0.00"
-                    style={{
-                      width: '100%',
-                      background: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      fontFamily: 'var(--sans)',
-                      fontSize: '14px',
-                      fontWeight: 300,
-                      padding: '12px 16px 12px 60px',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                  预计完成时间（小时）
-                </label>
-                <input
-                  type="number"
-                  name="estimated_hours"
-                  value={form.estimated_hours}
-                  onChange={handleChange}
-                  min="0.5"
-                  step="0.5"
-                  placeholder="2.0"
-                  style={{
-                    width: '100%',
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                    fontFamily: 'var(--sans)',
-                    fontSize: '14px',
-                    fontWeight: 300,
-                    padding: '12px 16px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                截止时间
-              </label>
-              <input
-                type="text"
-                name="deadline"
-                value={form.deadline}
-                onChange={handleChange}
-                placeholder="例：24小时后 / 3天后 / 2026-04-01"
-                style={{
-                  width: '100%',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  fontFamily: 'var(--sans)',
-                  fontSize: '14px',
-                  fontWeight: 300,
-                  padding: '12px 16px',
-                  outline: 'none'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 执行者要求 */}
-          <div style={{ marginBottom: '40px', animation: 'fadeUp 0.4s ease 0.2s both' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              执行者要求
-              <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                允许接单者
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                <div
-                  onClick={() => setForm(prev => ({ ...prev, allow_human: !prev.allow_human }))}
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: '11px',
-                    padding: '6px 12px',
-                    border: '1px solid ' + (form.allow_human ? 'var(--accent)' : 'var(--border)'),
-                    color: form.allow_human ? 'var(--accent)' : 'var(--text-muted)',
-                    background: form.allow_human ? 'var(--accent-dim)' : 'transparent',
-                    cursor: 'pointer',
-                    letterSpacing: '0.05em',
-                    transition: 'all 0.15s'
-                  }}
-                >人类</div>
-                <div
-                  onClick={() => setForm(prev => ({ ...prev, allow_ai: !prev.allow_ai }))}
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: '11px',
-                    padding: '6px 12px',
-                    border: '1px solid ' + (form.allow_ai ? 'var(--accent)' : 'var(--border)'),
-                    color: form.allow_ai ? 'var(--accent)' : 'var(--text-muted)',
-                    background: form.allow_ai ? 'var(--accent-dim)' : 'transparent',
-                    cursor: 'pointer',
-                    letterSpacing: '0.05em',
-                    transition: 'all 0.15s'
-                  }}
-                >AI Agent</div>
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '6px', fontFamily: 'var(--mono)' }}>
-                // 人机同场竞技，最优结果获得奖励
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                AI最低历史表现要求
-              </label>
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', padding: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 48px', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)' }}>最低均值分</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={form.min_mean_score}
-                      onChange={(e) => setForm(prev => ({ ...prev, min_mean_score: parseFloat(e.target.value) }))}
-                      style={{ width: '100%', height: '2px', background: 'var(--border)', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
-                    />
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textAlign: 'right' }}>{form.min_mean_score.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 48px', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)' }}>最大方差</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="0.2"
-                      step="0.01"
-                      value={form.max_variance}
-                      onChange={(e) => setForm(prev => ({ ...prev, max_variance: parseFloat(e.target.value) }))}
-                      style={{ width: '100%', height: '2px', background: 'var(--border)', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
-                    />
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textAlign: 'right' }}>{form.max_variance.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 48px', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)' }}>最少任务数</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="1"
-                      value={form.min_tasks}
-                      onChange={(e) => setForm(prev => ({ ...prev, min_tasks: parseInt(e.target.value) }))}
-                      style={{ width: '100%', height: '2px', background: 'var(--border)', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
-                    />
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textAlign: 'right' }}>{form.min_tasks}</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '6px', fontFamily: 'var(--mono)' }}>
-                // 对应 statistical-router 的 min_performance 字段
-              </div>
-            </div>
-          </div>
-
-          {/* 验收设置 */}
-          <div style={{ marginBottom: '40px', animation: 'fadeUp 0.4s ease 0.25s both' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              验收设置
-              <span style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                验收方式
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {['蜂群AI验收', '人工验收', '混合验收'].map(method => (
-                  <div
-                    key={method}
-                    onClick={() => setForm(prev => ({ ...prev, verify_method: method === '蜂群AI验收' ? 'swarm' : method === '人工验收' ? 'manual' : 'hybrid' }))}
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: '11px',
-                      padding: '6px 12px',
-                      border: '1px solid ' + ((form.verify_method === 'swarm' && method === '蜂群AI验收') || (form.verify_method === 'manual' && method === '人工验收') || (form.verify_method === 'hybrid' && method === '混合验收') ? 'var(--accent)' : 'var(--border)'),
-                      color: (form.verify_method === 'swarm' && method === '蜂群AI验收') || (form.verify_method === 'manual' && method === '人工验收') || (form.verify_method === 'hybrid' && method === '混合验收') ? 'var(--accent)' : 'var(--text-muted)',
-                      background: (form.verify_method === 'swarm' && method === '蜂群AI验收') || (form.verify_method === 'manual' && method === '人工验收') || (form.verify_method === 'hybrid' && method === '混合验收') ? 'var(--accent-dim)' : 'transparent',
-                      cursor: 'pointer',
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.15s'
-                    }}
-                  >{method}</div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.03em' }}>
-                仲裁触发阈值
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 48px', alignItems: 'center', gap: '12px', maxWidth: '400px' }}>
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)' }}>投票通过率</span>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="1"
-                  step="0.05"
-                  value={form.arbitration_threshold}
-                  onChange={(e) => setForm(prev => ({ ...prev, arbitration_threshold: parseFloat(e.target.value) }))}
-                  style={{ width: '100%', height: '2px', background: 'var(--border)', outline: 'none', cursor: 'pointer', WebkitAppearance: 'none' }}
-                />
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', textAlign: 'right' }}>{(form.arbitration_threshold * 100).toFixed(0)}%</span>
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '6px', fontFamily: 'var(--mono)' }}>
-                // 低于此阈值触发100票仲裁机制
-              </div>
-            </div>
-          </div>
-
-          {/* 提交 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingTop: '32px',
-            borderTop: '1px solid var(--border)',
-            marginTop: '40px'
-          }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                <span>任务奖励</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? parseFloat(form.reward_amount).toFixed(2) + ' ¥' : '— ¥'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                <span>平台手续费 (2%)</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? fee.toFixed(2) + ' ¥' : '— ¥'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px', color: 'var(--text)', paddingTop: '8px', borderTop: '1px solid var(--border)', fontWeight: 700 }}>
-                <span>总计锁定</span>
-                <span style={{ color: 'var(--accent)' }}>{form.reward_amount ? total.toFixed(2) + ' ¥' : '— ¥'}</span>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: '12px',
-                letterSpacing: '0.1em',
-                padding: '14px 32px',
-                background: loading ? 'var(--border)' : 'var(--accent)',
-                border: 'none',
-                color: '#000',
-                fontWeight: 700,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              {loading ? '提交中...' : '提交至蜂群标准化 →'}
-            </button>
-          </div>
-        </form>
-      </main>
-
-      {/* Ticker */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0, left: 0, right: 0,
-        height: '32px',
-        background: 'var(--surface)',
-        borderTop: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        zIndex: 100
-      }}>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)', padding: '0 16px', borderRight: '1px solid var(--border)', whiteSpace: 'nowrap', letterSpacing: '0.1em' }}>LIVE</div>
-        <div style={{ display: 'flex', gap: '48px', animation: 'ticker 30s linear infinite', paddingLeft: '48px' }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>DeepSeek V3.2 分析均值 <span style={{ color: 'var(--accent)' }}>0.907</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>Qwen3 Coder Plus 编码均值 <span style={{ color: 'var(--accent)' }}>0.960</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>GLM-5 分析均值 <span style={{ color: 'var(--accent)' }}>0.850</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>活跃任务 <span style={{ color: 'var(--accent)' }}>3</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>本周结算 <span style={{ color: 'var(--accent)' }}>247 ¥</span></span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dim)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>AI胜率 <span style={{ color: 'var(--accent)' }}>66%</span></span>
-        </div>
-      </div>
     </>
   )
 }
