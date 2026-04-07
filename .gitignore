@@ -41,3 +41,6 @@ venv/
 # Misc
 *.bak
 *.tmp
+
+# 含私钥的PM2配置，不提交
+ecosystem.config.js
