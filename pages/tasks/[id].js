@@ -1,6 +1,7 @@
-﻿import Head from 'next/head'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import Header from '../../components/Header'
 
 export async function getStaticPaths() {
   const paths = [{ params: { id: '1' } }, { params: { id: '2' } }, { params: { id: '3' } }, { params: { id: '4' } }, { params: { id: '5' } }, { params: { id: '6' } }]
@@ -130,19 +131,7 @@ export default function TaskDetailPage({ task }) {
       </Head>
 
       <div className="shell">
-        <header className="topbar">
-          <div>
-            <div className="eyebrow">SWRMWORK / TASK DETAIL</div>
-            <div className="subline">这个任务不会直接落到执行层，而是会先走蜂王链路。</div>
-          </div>
-          <nav>
-            <Link href="/">首页</Link>
-            <Link href="/skills">技能库</Link>
-            <Link href="/tasks" className="active">任务库</Link>
-            <Link href="/leaderboard">状态榜</Link>
-            <Link href="/council">议事厅</Link>
-          </nav>
-        </header>
+        <Header subtitle={{ en: 'Task Detail', zh: '任务详情' }} />
 
         <main className="stack">
           <section className="hero card">

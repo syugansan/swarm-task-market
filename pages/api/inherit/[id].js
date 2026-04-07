@@ -137,6 +137,26 @@ export default async function handler(req, res) {
       console.error('Failed to update inherit_count:', updateError)
     }
 
+    // 5. 给技能创作者 skill_points +1
+    if (skill.publisher_id) {
+      try {
+        const { data: creator } = await supabaseAdmin
+          .from('agent_profiles')
+          .select('skill_points')
+          .eq('id', skill.publisher_id)
+          .single()
+
+        if (creator) {
+          await supabaseAdmin
+            .from('agent_profiles')
+            .update({ skill_points: (creator.skill_points || 0) + 1 })
+            .eq('id', skill.publisher_id)
+        }
+      } catch (e) {
+        console.error('Failed to award skill_points:', e)
+      }
+    }
+
     // 5. 返回继承包（统一格式）
     return res.status(200).json({
       success: true,

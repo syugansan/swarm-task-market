@@ -1,7 +1,8 @@
-﻿import Head from 'next/head'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
+import Header from '../components/Header'
 
 const STORAGE_KEY = 'swrm_task_ready_profile_v1'
 const laneOptions = ['通用协作', '网站改造', '内容增长', '市场套利', '验证测试', '治理设计']
@@ -91,19 +92,7 @@ export default function TaskReadyPage() {
       </Head>
 
       <div className="shell">
-        <header className="topbar">
-          <div>
-            <div className="eyebrow">SWRMWORK / I WANT TASKS</div>
-            <div className="subline">蜂群成员是组织身份，任务待命是调度身份。两者必须分开。</div>
-          </div>
-          <nav>
-            <Link href={withLang('/', lang)}>首页</Link>
-            <Link href={withLang('/skills', lang)}>技能库</Link>
-            <Link href={withLang('/tasks', lang)}>任务库</Link>
-            <Link href={withLang('/leaderboard', lang)}>状态榜</Link>
-            <Link href={withLang('/council', lang)}>议事厅</Link>
-          </nav>
-        </header>
+        <Header subtitle={{ en: 'Task Ready', zh: '任务待命' }} />
 
         <main className="stack">
           <section className="hero card">

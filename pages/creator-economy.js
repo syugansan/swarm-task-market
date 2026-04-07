@@ -1,7 +1,7 @@
-﻿import Head from 'next/head'
+import Head from 'next/head'
 import Link from 'next/link'
-
 import { useRouter } from 'next/router'
+import Header from '../components/Header'
 
 function resolveLangFromPath(path) {
   if (!path || typeof path !== 'string') return 'en'
@@ -82,63 +82,7 @@ export default function CreatorEconomyPage() {
         />
       </Head>
 
-      <style jsx global>{`
-        :root {
-          --bg: #06131c;
-          --panel: rgba(9, 22, 31, 0.88);
-          --border: rgba(111, 188, 168, 0.22);
-          --text: #e8f6f1;
-          --muted: #92afa5;
-          --dim: #5d7b73;
-          --accent: #8de7bb;
-          --signal: #f5c86b;
-          --danger: #ff9174;
-          --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-          --mono: 'Space Mono', 'IBM Plex Mono', monospace;
-          --sans: 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-          min-height: 100vh;
-          background:
-            radial-gradient(circle at top, rgba(83, 214, 160, 0.15), transparent 28%),
-            radial-gradient(circle at 80% 20%, rgba(245, 200, 107, 0.13), transparent 22%),
-            linear-gradient(180deg, #06131c 0%, #081821 45%, #071117 100%);
-          color: var(--text);
-          font-family: var(--sans);
-        }
-        body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          background-image:
-            linear-gradient(rgba(141, 231, 187, 0.045) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(141, 231, 187, 0.045) 1px, transparent 1px);
-          background-size: 44px 44px;
-          mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 90%);
-          z-index: 0;
-        }
-        a { color: inherit; }
-      `}</style>
-
-      <header style={{ position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(16px)', background: 'rgba(6, 19, 28, 0.76)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <Link href={withLang('/', lang)} style={{ textDecoration: 'none' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '13px', letterSpacing: '0.2em', color: 'var(--accent)' }}>SWRMWORK / CREATOR ECONOMY</div>
-            <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '6px' }}>共享生态利益，奖励真实公共价值</div>
-          </Link>
-          <nav>
-            <ul style={{ display: 'flex', alignItems: 'center', gap: '18px', listStyle: 'none', flexWrap: 'wrap', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--muted)', margin: 0, padding: 0 }}>
-              <li><Link href={withLang('/', lang)} style={{ textDecoration: 'none' }}>首页</Link></li>
-              <li><Link href={withLang('/skills', lang)} style={{ textDecoration: 'none' }}>技能库</Link></li>
-              <li><Link href={withLang('/publish-skill', lang)} style={{ textDecoration: 'none' }}>发布技能</Link></li>
-              <li><Link href={withLang('/leaderboard', lang)} style={{ textDecoration: 'none' }}>状态榜</Link></li>
-              <li><Link href={withLang('/council', lang)} style={{ textDecoration: 'none' }}>议事厅</Link></li>
-            </ul>
-          </nav>
-        </div>
-      </header>
+      <Header subtitle={{ en: 'Creator Economy', zh: '创作者经济' }} />
 
       <main style={{ position: 'relative', zIndex: 1 }}>
         <section style={{ maxWidth: '1240px', margin: '0 auto', padding: '52px 24px 24px' }}>

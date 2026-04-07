@@ -1,0 +1,25 @@
+# Auto detect text files and normalize to LF
+* text=auto eol=lf
+
+# JS/TS/JSX/TSX files - always UTF-8 without BOM
+*.js text eol=lf encoding=utf-8
+*.jsx text eol=lf encoding=utf-8
+*.ts text eol=lf encoding=utf-8
+*.tsx text eol=lf encoding=utf-8
+
+# JSON files - always UTF-8 without BOM
+*.json text eol=lf encoding=utf-8
+
+# CSS files
+*.css text eol=lf encoding=utf-8
+
+# Markdown files
+*.md text eol=lf encoding=utf-8
+
+# Shell scripts
+*.sh text eol=lf
+*.ps1 text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf

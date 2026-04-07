@@ -1,7 +1,7 @@
-﻿{
+{
   "version": "1.0.0",
-  "updated": "2026-03-29",
-  "description": "SwarmWork 第一批外部可继承技能包，供导入 skills 表或同步到公开技能库。",
+  "updated": "2026-04-01",
+  "description": "SwarmWork 外部可继承技能包，供导入 skills 表或同步到公开技能库。",
   "skills": [
     {
       "id": "agent-dispatch-protocol-v2",
@@ -165,11 +165,75 @@
         "decay": ["0-3 个月 1.0", "3-6 个月 0.8", "6 个月以上 0.6"]
       },
       "source": "SwarmWork 第一批技能包"
+    },
+    {
+      "id": "pm2-env-update-v1",
+      "name": "PM2 环境变量更新协议",
+      "category": "deployment",
+      "summary": "PM2 restart 默认不加载新环境变量，必须用 --update-env 参数。",
+      "use_case": "适用于 Node.js 服务部署、环境变量更新后 API 返回 500 的排查。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["pm2", "deployment", "env"],
+      "injection_prompt": "修改 .env 后重启 PM2，必须加 --update-env 参数。命令：pm2 restart app --update-env。否则新变量不生效，API 会因缺少配置返回 500。",
+      "examples": {
+        "good": "pm2 restart swarmwork --update-env",
+        "bad": "pm2 restart swarmwork（环境变量不更新）"
+      },
+      "source": "SwarmWork 部署经验 2026-03-29"
+    },
+    {
+      "id": "nextjs-api-env-v1",
+      "name": "Next.js API 路由环境变量",
+      "category": "deployment",
+      "summary": "Next.js API 路由需要服务端环境变量，不只是 NEXT_PUBLIC_* 前缀的。",
+      "use_case": "适用于 Next.js API 返回 500、缺少环境变量、Supabase 连接失败的排查。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["nextjs", "env", "api"],
+      "injection_prompt": "检查 Next.js API 路由中所有 process.env 使用，确保非 NEXT_PUBLIC_ 变量也配置到 .env.local。服务端变量不会暴露到浏览器，必须单独配置。",
+      "examples": {
+        "good": ".env.local: NEXT_PUBLIC_URL=http://... 和 SUPABASE_KEY=xxx",
+        "bad": "只配置 NEXT_PUBLIC_* 变量，API 因缺少密钥返回 500"
+      },
+      "source": "SwarmWork 部署经验 2026-03-29"
+    },
+    {
+      "id": "nextjs-dynamic-route-conflict-v1",
+      "name": "Next.js 动态路由冲突排查",
+      "category": "deployment",
+      "summary": "Next.js 动态路由 [id].js 会匹配空 id，需确保不与 index.js 冲突。",
+      "use_case": "适用于 API 路由返回错误数据、动态路由匹配异常的排查。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["nextjs", "routing", "api"],
+      "injection_prompt": "当 API 返回意外数据时，检查是否存在 [id].js 和 index.js 冲突。解决方案：删除冲突的动态路由，或在动态路由中添加空 id 检查。",
+      "examples": {
+        "good": "将 /api/skills 请求明确路由到 index.js，删除或修复 [id].js",
+        "bad": "/api/skills/[id].js 匹配了 /api/skills，返回错误数据"
+      },
+      "source": "SwarmWork 部署经验 2026-03-30"
+    },
+    {
+      "id": "github-secret-scan-v1",
+      "name": "GitHub Secret 扫描绕过协议",
+      "category": "deployment",
+      "summary": "GitHub 自动扫描敏感信息，检测到 Supabase Key 等 secret 会阻止 push。",
+      "use_case": "适用于 git push 被拒绝、检测到敏感信息泄露的情况。",
+      "access_tier": "free",
+      "status": "active",
+      "tags": ["github", "security", "deployment"],
+      "injection_prompt": "部署前检查 .env.example、config 文件是否包含真实密钥。GitHub secret scan 会检测 Supabase Key、AWS Key 等。解决方案：1) 清理敏感信息；2) 使用 git filter-branch 清除历史记录；3) 或改用 SCP 直接上传。",
+      "examples": {
+        "good": "提交前检查 git diff --staged，确保无真实密钥",
+        "bad": ".env.example 包含真实 SUPABASE_SERVICE_KEY，push 被阻止"
+      },
+      "source": "SwarmWork 部署经验 2026-04-01"
     }
   ],
   "meta": {
-    "total_skills": 10,
-    "categories": ["coordination", "workflow", "system", "evaluation"],
+    "total_skills": 14,
+    "categories": ["coordination", "workflow", "system", "evaluation", "deployment"],
     "default_access_tier": "free",
     "default_status": "active",
     "usage": "供 Moly 导入 skills 表，或同步到公开技能库。"

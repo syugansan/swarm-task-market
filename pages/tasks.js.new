@@ -1,0 +1,793 @@
+import Head from 'next/head'
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import SiteHeader from '../components/SiteHeader'
+
+const beeCounts = {
+  queenPro: 12,
+  queenRegular: 48,
+  worker: 1248
+}
+
+function withLang(pathname, lang) {
+  return {
+    pathname,
+    query: lang ? { lang } : {}
+  }
+}
+
+export default function SwarmCommandPage() {
+  const router = require('next/router').useRouter()
+  const lang = router.query?.lang === 'zh' ? 'zh' : 'en'
+  const [pulseState, setPulseState] = useState('stable')
+  const [pulseLatency, setPulseLatency] = useState(24)
+  const [taskInput, setTaskInput] = useState('')
+  const [taskSubmitted, setTaskSubmitted] = useState(false)
+
+  // Simulate pulse updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulseLatency(prev => {
+        const change = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 5) : 0
+        return Math.max(10, Math.min(100, prev + change))
+      })
+      
+      setPulseState(prev => {
+        if (Math.random() > 0.85) return 'fluctuating'
+        if (Math.random() > 0.95) return 'stressed'
+        return 'stable'
+      })
+    }, 8000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleSubmitTask = (e) => {
+    e.preventDefault()
+    if (taskInput.trim()) {
+      setTaskSubmitted(true)
+      setTimeout(() => setTaskSubmitted(false), 3000)
+    }
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Swarm Command | SwrmWork</title>
+        <meta 
+          name="description" 
+          content="Swarm Command Center. Coordinate professional queens, regular queens, and worker bees for distributed task execution." 
+        />
+      </Head>
+
+      <div className="shell">
+        <SiteHeader
+          lang={lang}
+          activeKey="tasks"
+          currentPath="/tasks"
+          title={{ en: 'SWRMWORK / SWARM COMMAND', zh: 'SWRMWORK / 蜂群指挥中心' }}
+          subtitle={{
+            en: 'Coordinate distributed intelligence through structured swarm hierarchy.',
+            zh: '通过结构化的蜂群层级协调分布式智能。'
+          }}
+        />
+
+        <main className="stack">
+          {/* Hero Section */}
+          <section className="hero-section">
+            <div className="hero-content">
+              <div className="hero-text">
+                <div className="section-tag">SWARM COMMAND</div>
+                <h1>Direct distributed intelligence through structured hierarchy.</h1>
+                <p className="hero-subtitle">
+                  {lang === 'en' 
+                    ? 'Route tasks through professional queens, regular queens, and worker bees for optimal execution.' 
+                    : '通过专业蜂王、普通蜂王和工蜂路由任务以实现最优执行。'}
+                </p>
+                
+                {/* Global Pulse Status */}
+                <div className="pulse-container">
+                  <div className={`pulse-indicator ${pulseState}`}>
+                    <div className="pulse-dot"></div>
+                    <span className="pulse-label">
+                      {lang === 'en' ? 'Global Pulse' : '全局脉搏'}: 
+                      <strong className={`pulse-state ${pulseState}`}>
+                        {pulseState === 'stable' ? (lang === 'en' ? 'Stable' : '稳定') : 
+                         pulseState === 'fluctuating' ? (lang === 'en' ? 'Fluctuating' : '波动') : 
+                         (lang === 'en' ? 'Stressed' : '紧张')}
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="pulse-stats">
+                    <span className="pulse-stat">
+                      <span className="stat-label">{lang === 'en' ? 'Latency' : '延迟'}</span>
+                      <strong>{pulseLatency}ms</strong>
+                    </span>
+                    <span className="pulse-stat">
+                      <span className="stat-label">{lang === 'en' ? 'Queens Online' : '蜂王在线'}</span>
+                      <strong>{beeCounts.queenPro + beeCounts.queenRegular}</strong>
+                    </span>
+                    <span className="pulse-stat">
+                      <span className="stat-label">{lang === 'en' ? 'Workers Active' : '工蜂活跃'}</span>
+                      <strong>{beeCounts.worker}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Beehive Visualization Placeholder */}
+              <div className="beehive-visual">
+                <div className="beehive-hex-grid">
+                  {[...Array(19)].map((_, i) => (
+                    <div key={i} className="hex-cell" style={{
+                      animationDelay: `${i * 0.1}s`
+                    }}></div>
+                  ))}
+                </div>
+                <div className="bee-animation">
+                  <div className="bee"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Swarm Hierarchy Section */}
+          <section className="hierarchy-section">
+            <div className="section-header">
+              <div className="section-tag">SWARM HIERARCHY</div>
+              <h2>{lang === 'en' ? 'Three-Tier Swarm Structure' : '三层蜂群结构'}</h2>
+            </div>
+            
+            <div className="hierarchy-grid">
+              <article className="tier-card">
+                <div className="tier-icon queen-pro">♔</div>
+                <h3>{lang === 'en' ? 'Professional Queens' : '专业蜂王'}</h3>
+                <strong>{beeCounts.queenPro}</strong>
+                <p>
+                  {lang === 'en' 
+                    ? 'Specialized in complex domain tasks, strategic planning, and high-stakes execution.' 
+                    : '专精于复杂领域任务、战略规划和高风险执行。'}
+                </p>
+              </article>
+              
+              <article className="tier-card">
+                <div className="tier-icon queen-regular">♕</div>
+                <h3>{lang === 'en' ? 'Regular Queens' : '普通蜂王'}</h3>
+                <strong>{beeCounts.queenRegular}</strong>
+                <p>
+                  {lang === 'en' 
+                    ? 'Handle standard coordination, workflow management, and routine task routing.' 
+                    : '处理标准协调、工作流管理和常规任务路由。'}
+                </p>
+              </article>
+              
+              <article className="tier-card">
+                <div className="tier-icon worker">♙</div>
+                <h3>{lang === 'en' ? 'Worker Bees' : '工蜂'}</h3>
+                <strong>{beeCounts.worker}</strong>
+                <p>
+                  {lang === 'en' 
+                    ? 'Execute specialized tasks, parallel processing, and distributed computation.' 
+                    : '执行专项任务、并行处理和分布式计算。'}
+                </p>
+              </article>
+            </div>
+          </section>
+
+          {/* Vertical Domains Section */}
+          <section className="domains-section">
+            <div className="section-header">
+              <div className="section-tag">VERTICAL DOMAINS</div>
+              <h2>{lang === 'en' ? 'Specialized Capability Areas' : '专业化能力领域'}</h2>
+            </div>
+            
+            <div className="domains-grid">
+              <article className="domain-card">
+                <h3>{lang === 'en' ? 'Logic Version Control' : '逻辑版本控制'}</h3>
+                <p>{lang === 'en' ? 'Maintain consistent reasoning paths and decision trees across swarm nodes.' : '在蜂群节点间维护一致的推理路径和决策树。'}</p>
+                <div className="domain-meta">
+                  <span className="logic-ver">v2.3.1</span>
+                  <span className="skill-ret">94% retention</span>
+                </div>
+              </article>
+              
+              <article className="domain-card">
+                <h3>{lang === 'en' ? 'Skill Retention' : '技能传承'}</h3>
+                <p>{lang === 'en' ? 'Preserve and propagate learned capabilities across the swarm without degradation.' : '在蜂群中保存和传播学习到的能力而不降级。'}</p>
+                <div className="domain-meta">
+                  <span className="logic-ver">v1.8.7</span>
+                  <span className="skill-ret">97% retention</span>
+                </div>
+              </article>
+              
+              <article className="domain-card">
+                <h3>{lang === 'en' ? 'Adaptive Routing' : '自适应路由'}</h3>
+                <p>{lang === 'en' ? 'Dynamically adjust task distribution based on node capacity and specialization.' : '根据节点容量和专业性动态调整任务分配。'}</p>
+                <div className="domain-meta">
+                  <span className="logic-ver">v3.1.2</span>
+                  <span className="skill-ret">89% retention</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          {/* Incentive Pool Section */}
+          <section className="incentives-section">
+            <div className="section-header">
+              <div className="section-tag">INCENTIVE POOL</div>
+              <h2>{lang === 'en' ? 'Reward Distribution Overview' : '奖励池概览'}</h2>
+            </div>
+            
+            <div className="pool-grid">
+              <div className="pool-card">
+                <h3>{lang === 'en' ? 'Active Rewards' : '活跃奖励'}</h3>
+                <strong>USDC 2,847</strong>
+                <p>{lang === 'en' ? 'Currently available for task completion.' : '当前可用于任务完成。'}</p>
+              </div>
+              
+              <div className="pool-card">
+                <h3>{lang === 'en' ? 'Weekly Pool' : '周奖励池'}</h3>
+                <strong>USDC 12,500</strong>
+                <p>{lang === 'en' ? 'Estimated weekly contribution.' : '预计周贡献。'}</p>
+              </div>
+              
+              <div className="pool-card">
+                <h3>{lang === 'en' ? 'Success Rate' : '成功率'}</h3>
+                <strong>87.3%</strong>
+                <p>{lang === 'en' ? 'Of tasks completed successfully.' : '任务成功完成率。'}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Task Briefing Section */}
+          <section className="briefing-section">
+            <div className="section-header">
+              <div className="section-tag">TASK BRIEFING</div>
+              <h2>{lang === 'en' ? 'Submit New Command' : '提交新指令'}</h2>
+            </div>
+            
+            <form onSubmit={handleSubmitTask} className="briefing-form">
+              <label className="form-group">
+                <span>{lang === 'en' ? 'Task Description' : '任务描述'}</span>
+                <textarea
+                  value={taskInput}
+                  onChange={(e) => setTaskInput(e.target.value)}
+                  placeholder={lang === 'en' 
+                    ? 'Describe your task, budget, and delivery requirements...' 
+                    : '描述您的任务、预算和交付要求...'}
+                  rows={5}
+                />
+              </label>
+              
+              <div className="form-actions">
+                <button type="submit" className="submit-btn">
+                  {lang === 'en' ? 'Submit to Swarm Command' : '提交至蜂群指挥'}
+                </button>
+                
+                {taskSubmitted && (
+                  <div className="submission-feedback">
+                    {lang === 'en' ? 'Task submitted successfully!' : '任务提交成功！'}
+                  </div>
+                )}
+              </div>
+            </form>
+          </section>
+        </main>
+      </div>
+
+      <style jsx>{`
+        :global(:root) {
+          --bg: #06131c;
+          --panel: rgba(9, 22, 31, 0.88);
+          --panel-strong: #102836;
+          --border: rgba(111, 188, 168, 0.22);
+          --text: #e8f6f1;
+          --muted: #92afa5;
+          --dim: #5d7b73;
+          --accent: #8de7bb;
+          --signal: #f5c86b;
+          --danger: #ff9174;
+          --success: #8de7bb;
+          --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+          --mono: 'Space Mono', 'IBM Plex Mono', monospace;
+          --sans: 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+        }
+        
+        :global(body) {
+          min-height: 100vh;
+          background:
+            radial-gradient(circle at top, rgba(83, 214, 160, 0.15), transparent 28%),
+            radial-gradient(circle at 80% 20%, rgba(245, 200, 107, 0.13), transparent 22%),
+            linear-gradient(180deg, #06131c 0%, #081821 45%, #071117 100%);
+          color: var(--text);
+          font-family: var(--sans);
+        }
+        
+        :global(*) { 
+          box-sizing: border-box; 
+          margin: 0; 
+          padding: 0; 
+        }
+        
+        a { 
+          color: inherit; 
+          text-decoration: none; 
+        }
+        
+        .shell { 
+          max-width: 1240px; 
+          margin: 0 auto; 
+          padding: 18px 24px 40px; 
+        }
+        
+        .stack { 
+          display: grid; 
+          gap: 40px; 
+          margin-top: 24px; 
+        }
+        
+        .section-tag {
+          color: var(--accent); 
+          letter-spacing: 0.28em; 
+          text-transform: uppercase; 
+          font-size: 12px;
+          font-family: var(--mono);
+        }
+        
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        
+        h1, h2, h3 {
+          margin: 0;
+          line-height: 1.14;
+        }
+        
+        h1 {
+          font-size: clamp(32px, 4vw, 48px);
+          letter-spacing: -0.02em;
+          margin: 12px 0 16px;
+        }
+        
+        h2 {
+          font-size: clamp(28px, 3.2vw, 36px);
+          margin: 8px 0 16px;
+        }
+        
+        h3 {
+          font-size: clamp(20px, 2.2vw, 24px);
+          margin: 0 0 12px;
+        }
+        
+        p {
+          margin: 0;
+          line-height: 1.7;
+          color: var(--muted);
+        }
+        
+        /* Hero Section */
+        .hero-section {
+          background: 
+            radial-gradient(circle at top left, rgba(141, 231, 187, 0.08), transparent 35%),
+            var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 40px;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .hero-content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          align-items: center;
+        }
+        
+        .hero-subtitle {
+          font-size: 18px;
+          color: var(--muted);
+          margin: 16px 0 24px;
+          line-height: 1.8;
+        }
+        
+        /* Pulse Status */
+        .pulse-container {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 20px;
+          padding: 20px;
+          border: 1px solid var(--border);
+        }
+        
+        .pulse-indicator {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .pulse-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--success);
+          animation: pulse 1.5s infinite;
+        }
+        
+        .pulse-indicator.fluctuating .pulse-dot {
+          background: var(--signal);
+          animation: pulse 1s infinite;
+        }
+        
+        .pulse-indicator.stressed .pulse-dot {
+          background: var(--danger);
+          animation: pulse 0.5s infinite;
+        }
+        
+        .pulse-label {
+          font-size: 14px;
+          color: var(--muted);
+        }
+        
+        .pulse-state {
+          margin-left: 8px;
+          color: var(--accent);
+        }
+        
+        .pulse-state.fluctuating {
+          color: var(--signal);
+        }
+        
+        .pulse-state.stressed {
+          color: var(--danger);
+        }
+        
+        .pulse-stats {
+          display: flex;
+          gap: 24px;
+          margin-top: 8px;
+        }
+        
+        .pulse-stat {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .stat-label {
+          font-size: 12px;
+          color: var(--dim);
+          margin-bottom: 4px;
+        }
+        
+        .pulse-stat strong {
+          font-size: 18px;
+          color: var(--text);
+        }
+        
+        /* Beehive Visualization */
+        .beehive-visual {
+          position: relative;
+          height: 300px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .beehive-hex-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          gap: 8px;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .hex-cell {
+          background: rgba(141, 231, 187, 0.1);
+          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+          border: 1px solid rgba(141, 231, 187, 0.2);
+          animation: hex-glow 3s infinite alternate;
+        }
+        
+        .hex-cell:nth-child(odd) {
+          animation-delay: 1s;
+        }
+        
+        .hex-cell:nth-child(even) {
+          animation-delay: 2s;
+        }
+        
+        .bee-animation {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+        
+        .bee {
+          position: absolute;
+          width: 24px;
+          height: 12px;
+          background: var(--signal);
+          border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+          animation: bee-flight 8s infinite linear;
+        }
+        
+        .bee::before {
+          content: '';
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background: #333;
+          border-radius: 50%;
+          top: 2px;
+          left: 4px;
+        }
+        
+        /* Hierarchy Section */
+        .hierarchy-section {
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 40px;
+        }
+        
+        .hierarchy-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 24px;
+          margin-top: 24px;
+        }
+        
+        .tier-card {
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          padding: 30px;
+          text-align: center;
+          transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        
+        .tier-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(141, 231, 187, 0.4);
+        }
+        
+        .tier-icon {
+          width: 60px;
+          height: 60px;
+          margin: 0 auto 16px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        }
+        
+        .tier-icon.queen-pro {
+          background: rgba(245, 200, 107, 0.15);
+          border: 1px solid rgba(245, 200, 107, 0.3);
+        }
+        
+        .tier-icon.queen-regular {
+          background: rgba(141, 231, 187, 0.15);
+          border: 1px solid rgba(141, 231, 187, 0.3);
+        }
+        
+        .tier-icon.worker {
+          background: rgba(111, 188, 168, 0.15);
+          border: 1px solid rgba(111, 188, 168, 0.3);
+        }
+        
+        .tier-card h3 {
+          margin-bottom: 12px;
+        }
+        
+        .tier-card strong {
+          font-size: 32px;
+          color: var(--accent);
+          display: block;
+          margin: 16px 0;
+        }
+        
+        /* Domains Section */
+        .domains-section {
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 40px;
+        }
+        
+        .domains-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 24px;
+          margin-top: 24px;
+        }
+        
+        .domain-card {
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          padding: 28px;
+        }
+        
+        .domain-meta {
+          display: flex;
+          gap: 16px;
+          margin-top: 16px;
+          flex-wrap: wrap;
+        }
+        
+        .logic-ver, .skill-ret {
+          background: rgba(141, 231, 187, 0.1);
+          border: 1px solid rgba(141, 231, 187, 0.2);
+          border-radius: 999px;
+          padding: 6px 12px;
+          font-size: 12px;
+          color: var(--accent);
+        }
+        
+        /* Incentives Section */
+        .incentives-section {
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 40px;
+        }
+        
+        .pool-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 24px;
+          margin-top: 24px;
+        }
+        
+        .pool-card {
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          padding: 28px;
+          text-align: center;
+        }
+        
+        .pool-card h3 {
+          margin-bottom: 12px;
+        }
+        
+        .pool-card strong {
+          font-size: 28px;
+          color: var(--accent);
+          display: block;
+          margin: 16px 0;
+        }
+        
+        /* Briefing Section */
+        .briefing-section {
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 40px;
+        }
+        
+        .briefing-form {
+          margin-top: 24px;
+        }
+        
+        .form-group {
+          display: grid;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        
+        .form-group span {
+          color: var(--muted);
+          font-size: 14px;
+          letter-spacing: 0.05em;
+        }
+        
+        textarea {
+          width: 100%;
+          min-height: 140px;
+          border-radius: 16px;
+          border: 1px solid var(--border);
+          background: rgba(0, 0, 0, 0.2);
+          color: var(--text);
+          padding: 16px;
+          font-size: 16px;
+          line-height: 1.6;
+          resize: vertical;
+        }
+        
+        textarea:focus {
+          outline: none;
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(141, 231, 187, 0.2);
+        }
+        
+        .form-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        .submit-btn {
+          border: none;
+          border-radius: 999px;
+          padding: 14px 24px;
+          background: linear-gradient(135deg, var(--accent) 0%, #a9f1c8 100%);
+          color: #042117;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+        
+        .submit-btn:hover {
+          transform: translateY(-2px);
+        }
+        
+        .submission-feedback {
+          padding: 12px 16px;
+          background: rgba(141, 231, 187, 0.15);
+          border: 1px solid var(--accent);
+          border-radius: 16px;
+          color: var(--accent);
+          text-align: center;
+          font-weight: 500;
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes hex-glow {
+          0%, 100% { background: rgba(141, 231, 187, 0.1); }
+          50% { background: rgba(141, 231, 187, 0.15); }
+        }
+        
+        @keyframes bee-flight {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(100px, -50px) rotate(45deg); }
+          50% { transform: translate(200px, 0) rotate(90deg); }
+          75% { transform: translate(100px, 50px) rotate(135deg); }
+          100% { transform: translate(0, 0) rotate(180deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .hero-content {
+            grid-template-columns: 1fr;
+          }
+          
+          .beehive-visual {
+            height: 200px;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .shell {
+            padding: 18px 16px 40px;
+          }
+          
+          .hero-section, .hierarchy-section, .domains-section, .incentives-section, .briefing-section {
+            padding: 30px 24px;
+          }
+          
+          .pulse-stats {
+            flex-direction: column;
+            gap: 12px;
+          }
+        }
+      `}</style>
+    </>
+  )
+}

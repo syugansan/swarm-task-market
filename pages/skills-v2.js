@@ -111,26 +111,6 @@ export default function SkillsPage() {
         <meta name="description" content="蜂群技能库 - 真实验证的可继承技能" />
       </Head>
 
-      <style jsx global>{`
-        :root {
-          --bg: #07131b;
-          --panel: rgba(9, 23, 32, 0.9);
-          --border: rgba(110, 190, 167, 0.2);
-          --text: #e8f6f1;
-          --muted: #94b0a6;
-          --dim: #637d74;
-          --accent: #8de7bb;
-          --signal: #f3c66d;
-          --verified: #4ade80;
-          --mono: 'Space Mono', monospace;
-          --sans: 'Noto Sans SC', sans-serif;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { min-height: 100vh; color: var(--text); font-family: var(--sans); background: linear-gradient(180deg, #07131b 0%, #0b1821 100%); }
-        a { color: inherit; }
-        input, button { font: inherit; }
-      `}</style>
-
       <header style={{ position: 'sticky', top: 0, zIndex: 30, backdropFilter: 'blur(16px)', background: 'rgba(7, 19, 27, 0.78)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
