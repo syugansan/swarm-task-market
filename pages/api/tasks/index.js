@@ -1,7 +1,7 @@
 // GET  /api/tasks — 列出公开任务
 // POST /api/tasks — 发布新任务
 
-import { supabaseAdmin } from '../../../lib/supabase'
+import { supabaseAdmin } from '../../../lib/supabase-admin.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabaseAdmin
       .from('tasks')
-      .select('task_id, title, task_type, difficulty, reward_amount, budget_currency, status, created_at, requirement')
+      .select('task_id, title, task_type, difficulty, reward_amount, budget_currency, status, created_at, requirement, contact_type, contact_value')
       .eq('visibility', 'public')
       .eq('status', status)
       .order('created_at', { ascending: false })
@@ -26,9 +26,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, requirement, task_type, difficulty, reward_amount } = req.body || {}
+    const { title, requirement, task_type, difficulty, reward_amount, contact_type, contact_value } = req.body || {}
     if (!title || !requirement) {
       return res.status(400).json({ error: 'Missing required fields: title, requirement' })
+    }
+    if (!contact_type || !contact_value) {
+      return res.status(400).json({ error: 'Missing required fields: contact_type, contact_value' })
     }
 
     const { data, error } = await supabaseAdmin
@@ -43,7 +46,9 @@ export default async function handler(req, res) {
         status: 'pending',
         visibility: 'public',
         lane: 'lab',
-        intake_source: 'web'
+        intake_source: 'web',
+        contact_type,
+        contact_value: contact_value.trim()
       }])
       .select('task_id, title, status, created_at')
       .single()

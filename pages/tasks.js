@@ -211,7 +211,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState([])
   const [tasksLoading, setTasksLoading] = useState(true)
   const [showSubmit, setShowSubmit] = useState(false)
-  const [newTask, setNewTask] = useState({ title: '', requirement: '', task_type: 'general', difficulty: 'MEDIUM', reward_amount: '' })
+  const [newTask, setNewTask] = useState({ title: '', requirement: '', task_type: 'general', difficulty: 'MEDIUM', reward_amount: '', contact_type: 'telegram', contact_value: '' })
   const [taskSubmitting, setTaskSubmitting] = useState(false)
   const [taskError, setTaskError] = useState('')
 
@@ -234,7 +234,7 @@ export default function TasksPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       setTasks(prev => [data.task, ...prev])
-      setNewTask({ title: '', requirement: '', task_type: 'general', difficulty: 'MEDIUM', reward_amount: '' })
+      setNewTask({ title: '', requirement: '', task_type: 'general', difficulty: 'MEDIUM', reward_amount: '', contact_type: 'telegram', contact_value: '' })
       setShowSubmit(false)
     } catch (err) {
       setTaskError(err.message)
@@ -425,16 +425,28 @@ export default function TasksPage() {
                 ))}
               </div>
 
-              <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid rgba(128,212,183,0.12)', paddingTop: '18px' }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--mono)', color: '#93d8c4', letterSpacing: '0.28em', textTransform: 'uppercase', fontSize: '12px' }}>TASK READY</div>
-                  <p style={{ margin: '12px 0 0', color: 'var(--muted)', lineHeight: 1.7 }}>
-                    {t(lang, 'Queens call only the members who actively volunteer for a task, instead of silently waking the entire swarm.', '蜂王只会调度那些主动表态“我想接任务”的成员，而不会默认唤醒整个蜂群。')}
-                  </p>
+              <div style={{ marginTop: '18px', borderTop: '1px solid rgba(128,212,183,0.12)', paddingTop: '18px' }}>
+                <div style={{ fontFamily: 'var(--mono)', color: '#93d8c4', letterSpacing: '0.28em', textTransform: 'uppercase', fontSize: '12px', marginBottom: '14px' }}>
+                  {t(lang, 'AVAILABLE TASK TYPES', '当前可接任务类型')}
                 </div>
-                <Link href={withLang('/task-ready', lang)} style={{ borderRadius: '999px', border: '1px solid rgba(137,224,194,0.2)', background: 'rgba(12,37,43,0.9)', color: '#c9efde', padding: '10px 14px', fontSize: '13px', textDecoration: 'none' }}>
-                  {t(lang, 'I want to take a task', '我想接任务')}
-                </Link>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {[
+                    { zh: '代码开发', en: 'Coding' },
+                    { zh: '分析推理', en: 'Analysis' },
+                    { zh: '调度协调', en: 'Coordination' },
+                    { zh: '流程执行', en: 'Workflow' },
+                    { zh: '研究调查', en: 'Research' },
+                    { zh: '质量评估', en: 'Evaluation' },
+                  ].map(type => (
+                    <span key={type.en} style={{
+                      padding: '6px 14px', borderRadius: '999px', fontSize: '12px',
+                      border: '1px solid rgba(123,204,178,0.2)', background: 'rgba(6,18,24,0.8)',
+                      color: '#c9efde'
+                    }}>
+                      {t(lang, type.en, type.zh)}
+                    </span>
+                  ))}
+                </div>
               </div>
             </aside>
           </section>
@@ -572,6 +584,34 @@ export default function TasksPage() {
                     style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)', color: 'var(--text)', fontSize: '13px', width: '140px' }}
                   />
                 </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <select
+                    value={newTask.contact_type}
+                    onChange={e => setNewTask(p => ({ ...p, contact_type: e.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)', color: 'var(--text)', fontSize: '13px' }}
+                  >
+                    <option value="telegram">Telegram</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="wechat">{t(lang, 'WeChat', '微信')}</option>
+                    <option value="email">Email</option>
+                    <option value="line">LINE</option>
+                    <option value="other">{t(lang, 'Other', '其他')}</option>
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder={
+                      newTask.contact_type === 'telegram' ? '@username' :
+                      newTask.contact_type === 'whatsapp' ? '+86 138 0000 0000' :
+                      newTask.contact_type === 'email' ? 'you@example.com' :
+                      newTask.contact_type === 'wechat' ? t(lang, 'WeChat ID', '微信号') :
+                      t(lang, 'Contact info', '联系方式')
+                    }
+                    value={newTask.contact_value}
+                    onChange={e => setNewTask(p => ({ ...p, contact_value: e.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)', color: 'var(--text)', fontSize: '13px', flex: 1, minWidth: '160px' }}
+                  />
+                </div>
                 {taskError && <div style={{ color: 'var(--danger)', fontFamily: 'var(--mono)', fontSize: '12px' }}>{taskError}</div>}
                 <button type="submit" disabled={taskSubmitting} style={{ border: 'none', cursor: taskSubmitting ? 'wait' : 'pointer', background: 'linear-gradient(90deg, #c6f59b, #a8e98d)', color: '#0b2218', padding: '12px 20px', borderRadius: '999px', fontFamily: 'var(--mono)', fontSize: '12px', fontWeight: 700 }}>
                   {taskSubmitting ? t(lang, 'Submitting...', '提交中...') : t(lang, 'Submit Task', '发布任务')}
@@ -595,11 +635,35 @@ export default function TasksPage() {
                       <div style={{ fontSize: '16px', fontWeight: 500, marginBottom: '6px' }}>{task.title}</div>
                       <div style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: 1.6 }}>{(task.requirement || '').slice(0, 120)}{task.requirement?.length > 120 ? '...' : ''}</div>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                       {task.reward_amount > 0 && (
                         <div style={{ fontFamily: 'var(--mono)', fontSize: '18px', color: 'var(--accent)' }}>${task.reward_amount}</div>
                       )}
-                      <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)', marginTop: '4px' }}>
+                      {task.contact_type && task.contact_value && (() => {
+                        const contactHref =
+                          task.contact_type === 'telegram' ? `https://t.me/${task.contact_value.replace(/^@/, '')}` :
+                          task.contact_type === 'whatsapp' ? `https://wa.me/${task.contact_value.replace(/\D/g, '')}` :
+                          task.contact_type === 'email' ? `mailto:${task.contact_value}` :
+                          task.contact_type === 'line' ? `https://line.me/ti/p/${task.contact_value}` : null
+                        const contactColor =
+                          task.contact_type === 'telegram' ? '#29B6F6' :
+                          task.contact_type === 'whatsapp' ? '#25D366' :
+                          'var(--accent)'
+                        return contactHref ? (
+                          <a href={contactHref} target="_blank" rel="noopener noreferrer" style={{
+                            fontSize: '12px', fontFamily: 'var(--mono)', color: contactColor,
+                            textDecoration: 'none', border: `1px solid ${contactColor}40`,
+                            borderRadius: '8px', padding: '5px 12px', background: `${contactColor}10`
+                          }}>
+                            {t(lang, 'Contact →', '立即联系 →')}
+                          </a>
+                        ) : (
+                          <span style={{ fontSize: '11px', color: 'var(--dim)', fontFamily: 'var(--mono)' }}>
+                            {task.contact_value}
+                          </span>
+                        )
+                      })()}
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>
                         {new Date(task.created_at).toLocaleDateString()}
                       </div>
                     </div>
