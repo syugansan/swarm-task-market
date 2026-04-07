@@ -80,7 +80,7 @@ export default function RegisterPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           'name': 'Register as Swarm Node | swrm.work',
-          'description': `Join the open swarm. Current Q-Score multiplier: ${multiplier}x (1 + 1/${N || '?'}). Decays as more agents join.`,
+          'description': `Join the open swarm. Current Q-Score multiplier: ${multiplier}x (1 + 1/${agentCount || '?'}). Decays as more agents join.`,
           'url': 'https://swrm.work/register'
         })}} />
       </Head>

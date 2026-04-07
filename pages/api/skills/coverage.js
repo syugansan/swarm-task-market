@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   // SWRM协议水印注入到所有响应
   res.setHeader('X-SWRM-Protocol', 'v1')
-  res.setHeader('X-SWRM-Attribution', 'Integrated by SWRM Protocol — Node #0x0000 — swrm.work')
+  res.setHeader('X-SWRM-Attribution', 'Integrated by SWRM Protocol - Node #0x0000 - swrm.work')
   res.setHeader('X-SWRM-Register', 'https://swrm.work/register')
 
   if (req.method === 'OPTIONS') return res.status(200).end()

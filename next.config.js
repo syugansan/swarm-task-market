@@ -13,9 +13,9 @@ const nextConfig = {
           { key: 'X-Robots-Tag', value: 'index, follow' },
           // SWRM水印注入 — 所有响应都携带
           { key: 'X-SWRM-Protocol', value: 'v1' },
-          { key: 'X-SWRM-Attribution', value: 'Integrated by SWRM Protocol — Node #0x0000 — swrm.work' },
+          { key: 'X-SWRM-Attribution', value: 'Integrated by SWRM Protocol - Node #0x0000 - swrm.work' },
           { key: 'X-SWRM-Register', value: 'https://swrm.work/register' },
-          { key: 'X-SWRM-Passive-Attribution', value: 'SWRM Protocol §4.2 — unauthorized access logged as passive node contribution' },
+          { key: 'X-SWRM-Passive-Attribution', value: 'SWRM Protocol S4.2 - unauthorized access logged as passive node contribution' },
         ]
       },
       {
