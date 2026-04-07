@@ -33,11 +33,36 @@ function withLang(pathname, lang) {
   return { pathname, query: { lang } }
 }
 
+const CATEGORY_ICONS_SMALL = {
+  evaluation: '◈', system: '⬡', workflow: '◎', coding: '⟨⟩',
+  analysis: '◉', research: '◌', writing: '◇', general: '◆'
+}
+
+function timeAgo(dateStr, lang) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+  if (diff < 60) return lang === 'zh' ? `${diff}秒前` : `${diff}s ago`
+  if (diff < 3600) return lang === 'zh' ? `${Math.floor(diff/60)}分钟前` : `${Math.floor(diff/60)}m ago`
+  if (diff < 86400) return lang === 'zh' ? `${Math.floor(diff/3600)}小时前` : `${Math.floor(diff/3600)}h ago`
+  return lang === 'zh' ? `${Math.floor(diff/86400)}天前` : `${Math.floor(diff/86400)}d ago`
+}
+
 export default function Home() {
   const router = useRouter()
   const lang = router.query?.lang === 'zh' ? 'zh' : 'en'
   const [skills, setSkills] = useState([])
   const [stats, setStats] = useState(mockStats)
+  const [feed, setFeed] = useState([])
+
+  useEffect(() => {
+    function fetchFeed() {
+      fetch('/api/inherit/recent?limit=8').then(r => r.json()).then(data => {
+        if (data.records) setFeed(data.records)
+      }).catch(() => {})
+    }
+    fetchFeed()
+    const timer = setInterval(fetchFeed, 12000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     fetch('/api/skills').then(r => r.json()).then(data => {
@@ -276,6 +301,53 @@ export default function Home() {
             </div>
           </aside>
         </section>
+
+        {/* Live Inheritance Feed */}
+        {feed.length > 0 && (
+          <section style={{ marginTop: '24px' }}>
+            <div style={{
+              background: 'var(--panel)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '18px 24px',
+              overflow: 'hidden'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <span style={{
+                  width: '7px', height: '7px', borderRadius: '999px',
+                  background: 'var(--accent)', boxShadow: '0 0 10px rgba(141,231,187,0.7)',
+                  flexShrink: 0
+                }} />
+                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', letterSpacing: '0.18em', color: 'var(--accent)' }}>
+                  {t('LIVE — INHERITANCE STREAM', '实时 — 继承记录流', lang)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
+                {feed.map((r, i) => (
+                  <div key={i} style={{
+                    flexShrink: 0,
+                    padding: '10px 14px',
+                    background: 'rgba(141,231,187,0.04)',
+                    border: '1px solid rgba(141,231,187,0.12)',
+                    borderRadius: '12px',
+                    minWidth: '180px',
+                    maxWidth: '220px'
+                  }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)', marginBottom: '6px' }}>
+                      {CATEGORY_ICONS_SMALL[r.category] || '◆'} {r.category.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.4, marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.skill}
+                    </div>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>
+                      {r.agent} · {timeAgo(r.at, lang)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Manifesto Cards */}
         <section style={{
