@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, requirement, task_type, difficulty, reward_amount, contact_type, contact_value } = req.body || {}
+    const { title, requirement, task_type, difficulty, reward_amount, contact_type, contact_value, creator_id } = req.body || {}
     if (!title || !requirement) {
       return res.status(400).json({ error: 'Missing required fields: title, requirement' })
     }
@@ -34,9 +34,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: contact_type, contact_value' })
     }
 
+    // 系统默认 creator（moly-agent），允许匿名发布
+    const SYSTEM_CREATOR_ID = 'b751d7ec-57a7-4492-99aa-8d20af4adf9d'
+
     const { data, error } = await supabaseAdmin
       .from('tasks')
       .insert([{
+        creator_id: creator_id || SYSTEM_CREATOR_ID,
         title: title.slice(0, 200),
         requirement: requirement.slice(0, 2000),
         task_type: task_type || 'general',
