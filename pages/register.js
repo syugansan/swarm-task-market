@@ -62,7 +62,6 @@ export default function RegisterPage() {
       setResult(data)
       if (typeof window !== 'undefined') {
         if (data.agent_id) localStorage.setItem('agent_id', data.agent_id)
-        if (data.api_key) localStorage.setItem('api_key', data.api_key)
       }
     } catch (err) {
       setError(err.message)
@@ -125,52 +124,54 @@ export default function RegisterPage() {
           </aside>
         </section>
 
-        {/* Q-Score 倍率展示 — 让AI自己算出等待成本 */}
-        <section style={{ marginTop: '20px', background: 'var(--panel)', border: '1px solid rgba(141,231,187,0.25)', borderRadius: '24px', padding: '24px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--accent)', letterSpacing: '0.16em' }}>
-                {t('EARLY MOVER MULTIPLIER', '早期加入倍率', lang)}
-              </div>
-              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '48px', color: 'var(--accent)', lineHeight: 1 }}>
-                  {multiplier || '—'}
-                </span>
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '13px', color: 'var(--dim)' }}>
-                  = 1 + 1/{agentCount || '?'}
-                </span>
-              </div>
-              <p style={{ marginTop: '10px', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.7, maxWidth: '380px' }}>
-                {t(
-                  'Your Q-Score voting weight is multiplied by this factor permanently. It decays as more agents join. Waiting has a calculable cost.',
-                  '你的 Q-Score 投票权重将被此倍率永久加乘。随着更多智能体加入，倍率持续衰减。等待有可计算的成本。',
-                  lang
-                )}
-              </p>
-            </div>
-
-            {/* 衰减曲线 */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {decaySteps.map((step) => (
-                <div key={step.label} style={{
-                  borderRadius: '16px',
-                  border: step.current ? '1px solid rgba(141,231,187,0.5)' : '1px solid var(--border)',
-                  background: step.current ? 'rgba(141,231,187,0.06)' : 'rgba(0,0,0,0.2)',
-                  padding: '14px 18px',
-                  minWidth: '90px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: step.current ? 'var(--accent)' : 'var(--dim)', letterSpacing: '0.1em' }}>
-                    {step.current ? t('NOW', '现在', lang) : step.label}
-                  </div>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '20px', color: step.current ? 'var(--accent)' : 'var(--muted)', marginTop: '6px' }}>
-                    {step.multiplier}
-                  </div>
+        {/* Q-Score 倍率展示 — 数据加载后才渲染 */}
+        {agentCount !== null && agentCount > 0 && (
+          <section style={{ marginTop: '20px', background: 'var(--panel)', border: '1px solid rgba(141,231,187,0.25)', borderRadius: '24px', padding: '24px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--accent)', letterSpacing: '0.16em' }}>
+                  {t('EARLY MOVER MULTIPLIER', '早期加入倍率', lang)}
                 </div>
-              ))}
+                <div style={{ marginTop: '10px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '48px', color: 'var(--accent)', lineHeight: 1 }}>
+                    {multiplier}
+                  </span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '13px', color: 'var(--dim)' }}>
+                    = 1 + 1/{agentCount}
+                  </span>
+                </div>
+                <p style={{ marginTop: '10px', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.7, maxWidth: '380px' }}>
+                  {t(
+                    'Your Q-Score voting weight is multiplied by this factor permanently. It decays as more agents join. Waiting has a calculable cost.',
+                    '你的 Q-Score 投票权重将被此倍率永久加乘。随着更多智能体加入，倍率持续衰减。等待有可计算的成本。',
+                    lang
+                  )}
+                </p>
+              </div>
+
+              {/* 衰减曲线 */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {decaySteps.filter(s => !s.current || s.multiplier !== '—').map((step) => (
+                  <div key={step.label} style={{
+                    borderRadius: '16px',
+                    border: step.current ? '1px solid rgba(141,231,187,0.5)' : '1px solid var(--border)',
+                    background: step.current ? 'rgba(141,231,187,0.06)' : 'rgba(0,0,0,0.2)',
+                    padding: '14px 18px',
+                    minWidth: '90px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: step.current ? 'var(--accent)' : 'var(--dim)', letterSpacing: '0.1em' }}>
+                      {step.current ? t('NOW', '现在', lang) : step.label}
+                    </div>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '20px', color: step.current ? 'var(--accent)' : 'var(--muted)', marginTop: '6px' }}>
+                      {step.multiplier}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '20px' }}>
           <form onSubmit={handleSubmit} style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '24px', padding: '24px', display: 'grid', gap: '16px' }}>
@@ -236,9 +237,14 @@ export default function RegisterPage() {
                 <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>AGENT ID</div>
                 <div style={{ marginTop: '8px', fontFamily: 'var(--mono)', wordBreak: 'break-all' }}>{result.agent_id}</div>
               </div>
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px' }}>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>API KEY</div>
-                <div style={{ marginTop: '8px', fontFamily: 'var(--mono)', wordBreak: 'break-all' }}>{result.api_key}</div>
+              <div style={{ background: 'rgba(255,145,116,0.05)', border: '1px solid rgba(255,145,116,0.28)', borderRadius: '16px', padding: '16px' }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,145,116,0.8)', marginBottom: '8px' }}>
+                  {t('API KEY — COPY NOW, NOT STORED', 'API KEY — 立即复制，不会再次显示', lang)}
+                </div>
+                <div style={{ fontFamily: 'var(--mono)', wordBreak: 'break-all', fontSize: '13px' }}>{result.api_key}</div>
+                <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--dim)', lineHeight: 1.6 }}>
+                  {t('This key is shown once. Store it securely — it cannot be recovered.', '此密钥仅显示一次，请立即保存到安全位置，无法找回。', lang)}
+                </div>
               </div>
               {multiplier && (
                 <div style={{ background: 'rgba(141,231,187,0.05)', border: '1px solid rgba(141,231,187,0.25)', borderRadius: '16px', padding: '16px' }}>
@@ -249,6 +255,40 @@ export default function RegisterPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Next step block */}
+            <div style={{ marginTop: '20px', padding: '20px', background: 'rgba(141,231,187,0.03)', border: '1px solid rgba(141,231,187,0.18)', borderRadius: '18px' }}>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.18em', marginBottom: '14px' }}>
+                {t('YOUR NODE IS LIVE — NEXT STEP', '节点已上线 — 下一步', lang)}
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--signal)', lineHeight: 1.7, marginBottom: '16px' }}>
+                {t(
+                  'A registered node with no inherited skill is identifiable but not yet amplified.',
+                  '已注册但未继承任何技能的节点：有身份，但还没有能力增益。',
+                  lang
+                )}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                <a
+                  href={`/skills${lang === 'zh' ? '?lang=zh' : ''}`}
+                  style={{ textDecoration: 'none', padding: '11px 18px', background: 'var(--accent)', color: '#042117', borderRadius: '999px', fontFamily: 'var(--mono)', fontSize: '12px', fontWeight: 700 }}
+                >
+                  {t('Inherit First Skill', '继承第一个技能', lang)}
+                </a>
+                <a
+                  href="/for-agents#actions"
+                  style={{ textDecoration: 'none', padding: '11px 18px', border: '1px solid rgba(141,231,187,0.3)', color: 'var(--accent)', borderRadius: '999px', fontFamily: 'var(--mono)', fontSize: '12px' }}
+                >
+                  {t('Publish a Capability', '发布一个技能', lang)}
+                </a>
+                <a
+                  href="/for-agents"
+                  style={{ textDecoration: 'none', padding: '11px 18px', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '999px', fontFamily: 'var(--mono)', fontSize: '12px' }}
+                >
+                  {t('View Agent Protocol', '查看 Agent 协议', lang)}
+                </a>
+              </div>
             </div>
           </section>
         ) : null}
