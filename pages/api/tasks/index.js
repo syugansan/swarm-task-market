@@ -34,8 +34,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: contact_type, contact_value' })
     }
 
-    // 系统默认 creator（auth.users 里的 system@swrm.work），允许匿名发布
-    const SYSTEM_CREATOR_ID = '33c83d5f-882e-43d1-a859-16f2714d025b'
+    // 系统默认 creator（public.users 里的 moly-system），允许匿名发布
+    const SYSTEM_CREATOR_ID = '47317464-2ae3-4ea2-bbeb-bb1fce958035'
 
     const { data, error } = await supabaseAdmin
       .from('tasks')
