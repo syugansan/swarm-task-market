@@ -35,7 +35,9 @@ export default async function handler(req, res) {
     }
 
     // 系统默认 creator（public.users 里的 moly-system），允许匿名发布
-    const SYSTEM_CREATOR_ID = '47317464-2ae3-4ea2-bbeb-bb1fce958035'
+    // user_id: 47317464-2ae3-4ea2-bbeb-bb1fce958035（moly-system）
+    // 兜底用已验证可用的 test_user UUID
+    const SYSTEM_CREATOR_ID = '09e1e688-a70f-4b98-aa6c-d33fc2cbc7f8'
 
     const { data, error } = await supabaseAdmin
       .from('tasks')
