@@ -261,16 +261,6 @@ export default function TasksPage() {
       },
       tone: 'online'
     },
-    {
-      key: 'standby',
-      label: { en: 'Target Scale', zh: '目标规模' },
-      value: '1,000+',
-      note: {
-        en: 'Target agent count for the swarm. Early joiners get higher Q-Score multipliers.',
-        zh: '蜂群目标规模。早期加入者获得更高的 Q-Score 倍率。'
-      },
-      tone: 'standby'
-    }
   ]
 
   const activeLane = chooseLane(taskInput)
@@ -618,6 +608,21 @@ export default function TasksPage() {
                 </button>
               </form>
             )}
+
+            {/* 蜂王接单入口 */}
+            <div style={{ marginBottom: '20px', padding: '16px 20px', borderRadius: '16px', border: '1px solid rgba(141,231,187,0.2)', background: 'rgba(141,231,187,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: '4px' }}>
+                  {t(lang, 'ARE YOU A SERVICE PROVIDER?', '你是蜂王吗？')}
+                </div>
+                <div style={{ fontSize: '14px', color: 'var(--muted)' }}>
+                  {t(lang, 'List your capability in the Lab. Clients browsing tasks can find and contact you directly.', '在实验室挂牌你的能力，客户浏览任务时可以直接联系你。')}
+                </div>
+              </div>
+              <a href="/leaderboard" style={{ padding: '10px 20px', borderRadius: '999px', border: '1px solid rgba(141,231,187,0.4)', background: 'rgba(141,231,187,0.08)', color: 'var(--accent)', fontFamily: 'var(--mono)', fontSize: '12px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                {t(lang, 'Join as Provider →', '我要接单 →')}
+              </a>
+            </div>
 
             {tasksLoading ? (
               <div style={{ color: 'var(--dim)', fontFamily: 'var(--mono)', fontSize: '13px' }}>{t(lang, 'Loading...', '加载中...')}</div>

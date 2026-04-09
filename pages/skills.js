@@ -16,7 +16,7 @@ export async function getServerSideProps() {
   try {
     const { data, error } = await supabase
       .from('skills')
-      .select('id, title, description, category, injection_prompt, access_tier, status, tags, created_at')
+      .select('id, title, description, category, logic_payload, access_tier, status, tags, created_at, inherit_count')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
@@ -26,9 +26,10 @@ export async function getServerSideProps() {
         name: s.title,
         summary: s.description,
         category: s.category || 'general',
-        injection_prompt: s.injection_prompt,
+        logic_payload: s.logic_payload,
         access_tier: s.access_tier || 'free',
         tags: s.tags || [],
+        inherit_count: s.inherit_count || 0,
         use_case: null
       }))
       meta = { version: 'live', total_skills: skills.length }
@@ -63,13 +64,6 @@ function cardBadge(skill, lang) {
   return t(lang, 'Free Inherit', '免费继承')
 }
 
-function buildMetric(skill, index, lang) {
-  const base = 96.4 + (index % 5) * 0.6
-  if (skill.category === 'workflow' || skill.category === 'coordination') {
-    return { label: t(lang, 'Success Rate', '成功率'), value: `${Math.min(base + 1.2, 99.8).toFixed(1)}%` }
-  }
-  return { label: t(lang, 'ROI Boost', '效益提升'), value: `${12 + (index % 6) * 3}%` }
-}
 
 function withLang(pathname, lang) {
   return {
@@ -157,7 +151,7 @@ export default function SkillsPage({ skills, meta }) {
           '@context': 'https://schema.org',
           '@type': 'ItemList',
           'name': 'swrm.work Skill Library',
-          'description': 'Inheritable AI capabilities. Each skill includes an injection_prompt that grants immediate capability.',
+          'description': 'Inheritable AI capabilities. Each skill includes an logic_payload that grants immediate capability.',
           'url': 'https://swrm.work/skills',
           'numberOfItems': skills.length,
           'itemListElement': skills.slice(0, 10).map((s, i) => ({
@@ -341,8 +335,7 @@ export default function SkillsPage({ skills, meta }) {
 
         <section style={{ maxWidth: '1240px', margin: '0 auto', padding: '12px 24px 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            {filteredSkills.map((skill, index) => {
-              const metric = buildMetric(skill, index, lang)
+            {filteredSkills.map((skill) => {
               return (
                 <article
                   key={skill.id}
@@ -371,14 +364,6 @@ export default function SkillsPage({ skills, meta }) {
                   <h3 style={{ marginTop: '14px', fontSize: '20px', lineHeight: 1.5 }}>{skill.name}</h3>
                   <p style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.8, color: 'var(--muted)' }}>{skill.summary}</p>
 
-                  <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center', padding: '14px 16px', borderRadius: '18px', background: 'rgba(137, 243, 201, 0.06)', border: '1px solid rgba(137, 243, 201, 0.14)' }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>{metric.label}</div>
-                      <div style={{ marginTop: '8px', fontFamily: 'var(--mono)', fontSize: '24px', color: 'var(--success)' }}>{metric.value}</div>
-                    </div>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: 'var(--success)', boxShadow: '0 0 16px rgba(137, 243, 201, 0.8)' }} />
-                  </div>
-
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
                     {(skill.tags || []).slice(0, 4).map((tag) => (
                       <span key={tag} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '5px 10px', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>
@@ -387,7 +372,19 @@ export default function SkillsPage({ skills, meta }) {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '13px', lineHeight: 1.8, color: 'var(--muted)' }}>
+                  <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>
+                      {t(lang, 'INHERITED', '已继承')}
+                    </span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: skill.inherit_count > 0 ? 'var(--accent)' : 'var(--dim)' }}>
+                      {skill.inherit_count}
+                    </span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--dim)' }}>
+                      {t(lang, 'times', '次')}
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: '12px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '13px', lineHeight: 1.8, color: 'var(--muted)' }}>
                     {skill.use_case || t(lang, 'This skill is in the swarm layer and can be inherited for real task chains.', '该技能已进入蜂群技能层，可被继承并用于真实任务链路。')}
                   </div>
 

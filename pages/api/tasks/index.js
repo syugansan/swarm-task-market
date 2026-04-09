@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         difficulty: difficulty || 'MEDIUM',
         reward_amount: parseFloat(reward_amount) || 0,
         budget_currency: 'USD',
-        status: 'pending',
+        status: 'active',
         visibility: 'public',
         lane: 'lab',
         intake_source: 'web',
