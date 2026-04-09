@@ -30,17 +30,17 @@ export default async function handler(req, res) {
   const {
     name,
     summary,
-    injection_prompt,
+    logic_payload,
     category = 'general',
     tags = [],
     examples = null
   } = req.body || {}
 
   // 验证必填字段
-  if (!name || !summary || !injection_prompt) {
+  if (!name || !summary || !logic_payload) {
     return res.status(400).json({
       error: 'Missing required fields',
-      required: ['name', 'summary', 'injection_prompt']
+      required: ['name', 'summary', 'logic_payload']
     })
   }
 
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   if (summary.length > 1000) {
     return res.status(400).json({ error: 'Summary too long (max 1000 characters)' })
   }
-  if (injection_prompt.length > 10000) {
+  if (logic_payload.length > 10000) {
     return res.status(400).json({ error: 'Injection prompt too long (max 10000 characters)' })
   }
 
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       .insert([{
         name: name.trim(),
         summary: summary.trim(),
-        injection_prompt: injection_prompt.trim(),
+        logic_payload: logic_payload.trim(),
         category,
         tags,
         examples,
